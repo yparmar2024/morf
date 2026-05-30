@@ -1,0 +1,40 @@
+# Ignore the entire local build directory where CMake compiles code
+build/
+Build/
+x64/
+Debug/
+Release/
+
+# Ignore specific compiled binary outputs if they land outside /build
+*.exe
+*.out
+*.app
+*.a
+*.o
+*.obj
+*.so
+*.dylib
+
+# Ignore the subfolders where CMake downloads Raylib, ImGui, and nanoflann
+_deps/
+.cmake/
+CMakeUserPresets.json
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.sln
+*.vcxproj
+
+# VS Code files
+.vscode/
+
+# CLion / JetBrains files
+.idea/
+cmake-build-debug/
+cmake-build-release/
+
+# OS-specific clutter
+.DS_Store
+Thumbs.db
