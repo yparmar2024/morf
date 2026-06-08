@@ -1,8 +1,8 @@
-# 3D Git
+# Polydiff
 
-`3D Git` is a high-performance, native C++ command-line utility and visual desktop workspace designed to bring intelligent version control, diffing, and interactive merging to 3D meshes. 
+`Polydiff` is a high-performance, native C++ command-line utility and visual desktop workspace designed to bring intelligent version control, diffing, and interactive merging to 3D meshes. 
 
-Engineered specifically to integrate seamlessly with standard **Git** and **Git LFS (Large File Storage)** pipelines, `3D Git` treats 3D geometry as code—allowing developers, technical artists, and automated pipelines to isolate structural changes, evaluate modifications down to the micrometer, and resolve mesh merge conflicts without leaving their terminal workflow.
+Engineered specifically to integrate seamlessly with standard **Git** and **Git LFS (Large File Storage)** pipelines, `Polydiff` treats 3D geometry as code—allowing developers, technical artists, and automated pipelines to isolate structural changes, evaluate modifications down to the micrometer, and resolve mesh merge conflicts without leaving their terminal workflow.
 
 ---
 
@@ -17,13 +17,3 @@ Engineered specifically to integrate seamlessly with standard **Git** and **Git 
 * **Native Git Integration Hooks:** Plugs directly into the system shell as a native Git extension wrapper (`git 3d-diff` and `git 3d-merge`).
 
 ---
-
-## Repository Architecture
-
-The project enforces a strict separation of concerns, decoupling heavy geometric mathematical computations from the visual rendering drivers:
-
-```text
-3d-git/
-├── core/       # High-performance math engine (Parsing, Set matching, KD-Trees)
-├── gui/        # Desktop visual rendering suite (Raylib hardware layout + Dear ImGui)
-└── cli/        # Executable binary entry points (git-3d-diff and git-3d-merge)
