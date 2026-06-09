@@ -37,7 +37,9 @@ namespace Polydiff {
 
                 // Fetch each index and push to faces
                 while (ss >> idx) {
-                    face.vertices.push_back({idx - 1});
+                    VertexData vData;
+                    vData.vIdx = idx - 1;
+                    face.vertices.push_back(vData);
                 }
                 object->faces.push_back(face);
             } else if (type == "o") {
