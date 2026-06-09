@@ -31,14 +31,30 @@ namespace Polydiff {
                     object = &model.objects.back();
                 }
 
-                // Declare index and face
-                int idx;
+                // Declare face and token
                 Face face;
+                std::string token;
 
-                // Fetch each index and push to faces
-                while (ss >> idx) {
+                // Fetch each token and update attributes respectively
+                while (ss >> token) {
                     VertexData vData;
-                    vData.vIdx = idx - 1;
+                    std::stringstream ts(token);
+                    std::string part;
+                    int slot = 0;
+
+                    while (std::getline(ts, part, '/')) {
+                        if (!part.empty()) {
+                            int val = std::stoi(part) - 1;
+                            if (slot == 0) {
+                                vData.vIdx = val;
+                            } else if (slot == 1) {
+                                vData.vtIdx = val;
+                            } else if (slot == 2) {
+                                vData.vnIdx = val;
+                            }
+                        }
+                        slot++;
+                    }
                     face.vertices.push_back(vData);
                 }
                 object->faces.push_back(face);

@@ -11,6 +11,8 @@ namespace Polydiff {
     /* Struct for each vertex's metadata */
     struct VertexData {
         int vIdx = -1;
+        int vtIdx = -1;
+        int vnIdx = -1;
     };
 
     /* Struct for each face */
