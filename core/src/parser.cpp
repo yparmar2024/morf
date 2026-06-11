@@ -20,10 +20,20 @@ namespace Polydiff {
             ss >> type;
 
             if (type == "v") {
-                // Fetch x, y, and z and push vertex
+                // Fetch x, y, z and push vertex
                 float x, y, z;
                 ss >> x >> y >> z;
                 model.vertices.push_back({x, y, z});
+            } else if (type == "vt") {
+                // Fetch u, v, w and push vertex
+                float u, v, w = 0.0f;
+                ss >> u >> v >> w;
+                model.textureVertices.push_back({u, v, w});
+            } else if (type == "vn") {
+                // Fetch x, y, z and push vertex
+                float x, y, z;
+                ss >> x >> y >> z;
+                model.normalVertices.push_back({x, y, z});
             } else if (type == "f") {
                 // If no object exists yet, create a default one
                 if (object == nullptr) {
@@ -55,7 +65,7 @@ namespace Polydiff {
                         }
                         slot++;
                     }
-                    face.vertices.push_back(vData);
+                    face.vertexData.push_back(vData);
                 }
                 object->faces.push_back(face);
             } else if (type == "o") {
