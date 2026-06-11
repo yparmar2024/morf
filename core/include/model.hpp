@@ -8,6 +8,16 @@ namespace Polydiff {
         float x, y, z;
     };
 
+    /* Struct for each vertex texture */
+    struct VertexTexture {
+        float u, v, w = 0.0f;
+    };
+    
+    /* Struct for each vertex normal */
+    struct VertexNormal {
+        float x, y, z;
+    };
+
     /* Struct for each vertex's metadata */
     struct VertexData {
         int vIdx = -1;
@@ -17,7 +27,7 @@ namespace Polydiff {
 
     /* Struct for each face */
     struct Face {
-        std::vector<VertexData> vertices;
+        std::vector<VertexData> vertexData;
     };
 
     /* Struct for each object */
@@ -29,6 +39,8 @@ namespace Polydiff {
     /* Struct for each 3d model */
     struct Model {
         std::vector<Vertex> vertices;
+        std::vector<VertexTexture> textureVertices;
+        std::vector<VertexNormal> normalVertices;
         std::vector<Object> objects;
     };
 }
