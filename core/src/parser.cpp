@@ -19,7 +19,10 @@ namespace Morf {
             std::string type;
             ss >> type;
 
-            if (type == "v") {
+            if (type[0] == '#') {
+                // Skip comments
+                continue;
+            } else if (type == "v") {
                 // Fetch x, y, z and push vertex
                 float x, y, z;
                 ss >> x >> y >> z;
@@ -76,6 +79,9 @@ namespace Morf {
                 // Push to objects and point to active object
                 model.objects.push_back({name, {}});
                 object = &model.objects.back();
+            } else {
+                // Log to terminal unrecognized chars
+                std::cerr << ss.rdbuf() << "\n" << std::endl;
             }
         }
 
