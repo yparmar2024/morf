@@ -40,12 +40,47 @@ namespace Morf {
     /* Struct for each face */
     struct Face {
         std::vector<VertexData> vertexData;
+
+        std::vector<Vertex> getCanonicalForm(const std::vector<Vertex>& vertices) const {
+            // Declare size n, and populate face verticess
+            const std::size_t n = vertexData.size();
+            std::vector<Vertex> faceVertices(n);
+            for (std::size_t i = 0; i < n; ++i) {
+                faceVertices[i] = vertices[vertexData[i].vIdx];
+            }
+
+            // Find the smallest vertex
+            std::size_t minIdx = 0;
+            for (std::size_t i = 1; i < n; ++i) {
+                if (faceVertices[i] < faceVertices[minIdx]) minIdx = i;
+            }
+
+            // Build canonical form by starting from min index
+            std::vector<Vertex> canonicalFaceForm(n);
+            for (std::size_t i = 0; i < n; ++i) {
+                canonicalFaceForm[i] = faceVertices[(minIdx + i) % n];
+            }
+            return canonicalFaceForm;
+        }
     };
 
     /* Struct for each object */
     struct Object {
         std::string name;
         std::vector<Face> faces;
+
+        std::vector<std::vector<Vertex>> getCanonicalForm(const std::vector<Vertex>& vertices) const {
+            // Declare size n and populate canonical face forms
+            const std::size_t n = faces.size();
+            std::vector<std::vector<Vertex>> canonicalObjectForm(n);
+            for (std::size_t i = 0; i < n; ++i) {
+                canonicalObjectForm[i] = faces[i].getCanonicalForm(vertices);
+            }
+
+            // Sort the canonical face forms
+            std::sort(canonicalObjectForm.begin(), canonicalObjectForm.end());
+            return canonicalObjectForm;
+        }
     };
 
     /* Struct for each 3d model */
