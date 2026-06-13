@@ -72,9 +72,10 @@ namespace Morf {
         std::vector<std::vector<Vertex>> getCanonicalForm(const std::vector<Vertex>& vertices) const {
             // Declare size n and populate canonical face forms
             const std::size_t n = faces.size();
-            std::vector<std::vector<Vertex>> canonicalObjectForm(n);
-            for (std::size_t i = 0; i < n; ++i) {
-                canonicalObjectForm[i] = faces[i].getCanonicalForm(vertices);
+            std::vector<std::vector<Vertex>> canonicalObjectForm;
+            canonicalObjectForm.reserve(n);
+            for (const auto& face : faces) {
+                canonicalObjectForm.push_back(face.getCanonicalForm(vertices));
             }
 
             // Sort the canonical face forms
@@ -89,5 +90,21 @@ namespace Morf {
         std::vector<VertexTexture> textureVertices;
         std::vector<VertexNormal> normalVertices;
         std::vector<Object> objects;
+
+        std::vector<std::vector<Vertex>> getFlatCanonicalFaces() const {
+            // Declare size n, compute n and populate flat canonical faces
+            std::size_t n = 0;
+            for (const auto& obj : objects) { n += obj.faces.size(); }
+            std::vector<std::vector<Vertex>> flatCanonicalFaces;
+            flatCanonicalFaces.reserve(n);
+
+            // Populate flat canonical faces
+            for (const auto& obj : objects) {
+                for (const auto& face : obj.faces) {
+                    flatCanonicalFaces.push_back(face.getCanonicalForm(vertices));
+                }
+            }
+            return flatCanonicalFaces;
+        }
     };
 }
