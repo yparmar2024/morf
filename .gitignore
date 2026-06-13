@@ -14,6 +14,7 @@ Release/
 *.obj
 *.so
 *.dylib
+*.png
 
 # Ignore the subfolders where CMake downloads Raylib, ImGui, and nanoflann
 _deps/
