@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-namespace Polydiff {
+namespace Morf {
     /* Struct for each vertex */
     struct Vertex {
         float x, y, z;

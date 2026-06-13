@@ -5,7 +5,7 @@
 int main(int argc, char* argv[]) {
     // Parse args, throw error if two paths to models are not provided
     if (argc != 3) {
-        std::cerr << "Usage: polydiff <base_model.obj> <target_model.obj>" << std::endl;
+        std::cerr << "Usage: morf <base_model.obj> <target_model.obj>" << std::endl;
         return 1;
     }
 
@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Create model via parser
-    Polydiff::Model baseModel = Polydiff::Parser::parse(basePath);
-    Polydiff::Model targetModel = Polydiff::Parser::parse(targetPath);
+    Morf::Model baseModel = Morf::Parser::parse(basePath);
+    Morf::Model targetModel = Morf::Parser::parse(targetPath);
 
     // TODO: Perform diff logic
 

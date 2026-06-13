@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 # Project name and version
-project(polydiff VERSION 1.0.0 LANGUAGES CXX)
+project(morf VERSION 1.0.0 LANGUAGES CXX)
 
 # Set global project standards
 set(CMAKE_CXX_STANDARD 17)

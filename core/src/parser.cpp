@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace Polydiff {
+namespace Morf {
     /* Method to parse an .obj file into a Model object */
     Model Parser::parse(const std::string& filePath) {
         // Declare model, a file stream, current line and current object

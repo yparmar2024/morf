@@ -2,7 +2,7 @@
 #include "model.hpp"
 #include <string>
 
-namespace Polydiff {
+namespace Morf {
     /* Parser object with public parse method */
     class Parser {
         public:
