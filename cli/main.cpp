@@ -1,4 +1,5 @@
 #include "../core/include/parser.hpp"
+#include "../core/include/diff.hpp"
 #include <iostream>
 #include <filesystem>
 
@@ -23,11 +24,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Create model via parser
+    // Create models via parser
     Morf::Model baseModel = Morf::Parser::parse(basePath);
     Morf::Model targetModel = Morf::Parser::parse(targetPath);
 
-    // TODO: Perform diff logic
+    // Call compare on the models
+    Morf::Diff diff = Morf::DiffEngine::compare(baseModel, targetModel);
+
+    // TODO: Visualize difference via Raylib integration
 
     return 0;
 }

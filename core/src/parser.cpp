@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace Morf {
-    /* Method to parse an .obj file into a Model object */
+    /* Method to parse an .obj file */
     Model Parser::parse(const std::string& filePath) {
         // Declare model, a file stream, current line and current object
         Model model;
