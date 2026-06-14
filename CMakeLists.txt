@@ -10,3 +10,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add dependent subdirectories
 add_subdirectory(cli)
+add_subdirectory(core)
+add_subdirectory(gui)

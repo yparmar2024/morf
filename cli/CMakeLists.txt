@@ -1,11 +1,5 @@
-# Create executables
-add_executable(morf
-    main.cpp
-    ../core/src/parser.cpp
-    ../core/src/diff.cpp
-)
+# Create CLI executable
+add_executable(morf main.cpp)
 
-# Provide header file paths
-target_include_directories(morf PRIVATE
-    ../core/include
-)
+# Link core libraries
+target_link_libraries(morf PRIVATE morfCore)
