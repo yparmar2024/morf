@@ -90,21 +90,5 @@ namespace Morf {
         std::vector<VertexTexture> textureVertices;
         std::vector<VertexNormal> normalVertices;
         std::vector<Object> objects;
-
-        std::vector<std::vector<Vertex>> getFlatCanonicalFaces() const {
-            // Declare size n, compute n and populate flat canonical faces
-            std::size_t n = 0;
-            for (const auto& obj : objects) { n += obj.faces.size(); }
-            std::vector<std::vector<Vertex>> flatCanonicalFaces;
-            flatCanonicalFaces.reserve(n);
-
-            // Populate flat canonical faces
-            for (const auto& obj : objects) {
-                for (const auto& face : obj.faces) {
-                    flatCanonicalFaces.push_back(face.getCanonicalForm(vertices));
-                }
-            }
-            return flatCanonicalFaces;
-        }
     };
 }
