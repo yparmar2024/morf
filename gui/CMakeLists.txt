@@ -13,22 +13,19 @@ FetchContent_MakeAvailable(raylib)
 
 # Add libraries
 add_library(morfGui STATIC
-    src/Application.cpp
-    src/Renderer.cpp
+    src/application.cpp
+    src/renderer.cpp
 )
 
-# Provide header file paths
+# Expose our headers to consumers
 target_include_directories(morfGui
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/core/include
 )
 
-# Link external and core libraries
+# Link raylib and core libraries
 target_link_libraries(morfGui
     PUBLIC
         raylib
-    PRIVATE
         morfCore
 )

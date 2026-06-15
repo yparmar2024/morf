@@ -1,5 +1,5 @@
 # Create CLI executable
 add_executable(morf main.cpp)
 
-# Link core libraries
-target_link_libraries(morf PRIVATE morfCore)
+# Link GUI libraries
+target_link_libraries(morf PRIVATE morfGui)
