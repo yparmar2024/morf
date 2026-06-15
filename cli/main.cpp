@@ -1,3 +1,4 @@
+#include "application.hpp"
 #include "parser.hpp"
 #include "diff.hpp"
 #include <iostream>
@@ -31,7 +32,10 @@ int main(int argc, char* argv[]) {
     // Call compare on the models
     Morf::Diff diff = Morf::DiffEngine::compare(baseModel, targetModel);
 
-    // TODO: Visualize difference via Raylib integration
+    // Initialize application without merge mode and run to see difference
+    Morf::Application app(1600, 900);
+    app.isMergeMode = false;
+    app.run(baseModel, targetModel, diff);
 
     return 0;
 }
