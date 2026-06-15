@@ -16,9 +16,9 @@ namespace Morf {
         greyMat_ = LoadMaterialDefault();
         greyMat_.maps[MATERIAL_MAP_DIFFUSE].color = LIGHTGRAY;
         greenMat_ = LoadMaterialDefault();
-        greenMat_.maps[MATERIAL_MAP_DIFFUSE].color = GREEN;
+        greenMat_.maps[MATERIAL_MAP_DIFFUSE].color = { 0, 255, 0, 100 };
         redMat_ = LoadMaterialDefault();
-        redMat_.maps[MATERIAL_MAP_DIFFUSE].color = RED;
+        redMat_.maps[MATERIAL_MAP_DIFFUSE].color = { 255, 0, 0, 100 };
 
         // Set loaded to true
         loaded_ = true;
@@ -37,10 +37,14 @@ namespace Morf {
             0.0f, 0.0f, 0.0f, 1.0f
         };
 
-        // Draw all meshes with their materials if it exists
+        // Draw common mesh, if it exists, in solid color
         if (commonMesh_.triangleCount > 0) { DrawMesh(commonMesh_,  greyMat_,  identity); }
+
+        // Draw added and removed meshes, if it exists, in transparent color
+        BeginBlendMode(BLEND_ALPHA);
         if (addedMesh_.triangleCount > 0) { DrawMesh(addedMesh_,   greenMat_, identity); }
         if (removedMesh_.triangleCount > 0) { DrawMesh(removedMesh_, redMat_,   identity); }
+        EndBlendMode();
     }
 
     /* Method to unload all resources */
