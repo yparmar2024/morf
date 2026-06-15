@@ -1,5 +1,5 @@
-#include "../core/include/parser.hpp"
-#include "../core/include/diff.hpp"
+#include "parser.hpp"
+#include "diff.hpp"
 #include <iostream>
 #include <filesystem>
 

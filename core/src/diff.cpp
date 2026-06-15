@@ -1,4 +1,4 @@
-#include "../include/diff.hpp"
+#include "diff.hpp"
 
 namespace Morf {
     /* Method to compare two models */

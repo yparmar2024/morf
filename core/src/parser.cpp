@@ -1,4 +1,4 @@
-#include "../include/parser.hpp"
+#include "parser.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
