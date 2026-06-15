@@ -25,6 +25,7 @@ namespace Morf {
                 diff.added.push_back({t.objectIdx, t.faceIdx});
                 j++;
             } else {
+                diff.common.push_back({b.objectIdx, b.faceIdx});
                 i++; j++;
             }
         }

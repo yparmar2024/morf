@@ -25,6 +25,7 @@ namespace Morf {
         bool hasDiff = false;
         std::vector<FaceRef> added;
         std::vector<FaceRef> removed;
+        std::vector<FaceRef> common;
     };
 
     /* DiffEngine object with public compare method */
