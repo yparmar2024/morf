@@ -1,7 +1,7 @@
 # Add libraries
 add_library(morfCore STATIC
     src/parser.cpp
-    src/diff.cp
+    src/diff.cpp
 )
 
 # Provide header file paths
