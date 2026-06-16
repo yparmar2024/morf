@@ -1,3 +1,6 @@
+/* morf - gui/include/renderer.hpp
+ * Rendering logic to convert internal model to Raylib-facing model
+ */
 #pragma once
 #include "raylib.h"
 #include "model.hpp"
@@ -5,33 +8,19 @@
 #include <vector>
 
 namespace Morf {
-    /* Renderer object to render meshes */
     class Renderer {
         public:
-            // Create meshes from models and diff
-            void createMeshes(const Model& base, const Model& target, const Diff& diff);
-
-            // Draw meshes in window
-            void drawMeshes() const;
-
-            // Unload resources from meshes
-            void unloadMeshes();
+            void createModels(const Model& base, const Model& target, const Diff& diff);
+            void drawModels() const;
+            void unloadModels();
         
         private:
-            // Build a mesh
-            Mesh buildMesh(const Model& model, const std::vector<FaceRef>& faces) const;
+            std::vector<::Model> commonModels_{0};
+            std::vector<::Model> addedModels_{0};
+            std::vector<::Model> removedModels_{0};
 
-            // Raylib meshes
-            Mesh commonMesh_{0};
-            Mesh addedMesh_{0};
-            Mesh removedMesh_{0};
-
-            // Raylib materials
-            Material greyMat_{0};
-            Material greenMat_{0};
-            Material redMat_{0};
-
-            // Loaded boolean
             bool loaded_ = false;
+            
+            std::vector<::Model> buildRaylibModels(const Model& model, const std::vector<FaceRef>& faces, Color color) const;
     };
-}
+} // namespace Morf
