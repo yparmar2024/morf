@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
+#include <string>
 
 namespace Morf {
     /* Method to parse an .obj file */
@@ -11,6 +13,9 @@ namespace Morf {
         std::ifstream file(filePath);
         std::string line;
         Object* object = nullptr;
+
+        // Declare a hashmap to map unknown tokens to their count
+        std::unordered_map<std::string, int> unknownTokens;
 
         // Iterate over each line in the file
         while (std::getline(file, line)) {
@@ -80,9 +85,16 @@ namespace Morf {
                 model.objects.push_back({name, {}});
                 object = &model.objects.back();
             } else {
-                // Log to terminal unrecognized chars
-                std::cerr << ss.rdbuf() << "\n" << std::endl;
+                // Collect unknown tokens to log later
+                unknownTokens[type]++;
             }
+        }
+
+        // Log all unknown tokens, if any, to the terminal
+        if (!unknownTokens.empty()) {
+            std::cerr << "\nWarning: unrecognized OBJ commands/tokens found for " << filePath << ":\n";
+            for (const auto& [token, count] : unknownTokens) { std::cerr << "  " << token << " (" << count << " occurences\n"; }
+            std::cerr << "\n" << std::endl;
         }
 
         // Return the parsed model
