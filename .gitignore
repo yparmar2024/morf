@@ -11,10 +11,13 @@ Release/
 *.app
 *.a
 *.o
-*.obj
 *.so
 *.dylib
+
+# Ignore any testing files
+*.obj
 *.png
+*.mtl
 
 # Ignore the subfolders where CMake downloads Raylib, ImGui, and nanoflann
 _deps/
