@@ -26,6 +26,7 @@ namespace Morf {
 
             const float rotationalSens = 0.003f;
             const float zoomSpeed      = 0.5f;
+            const float panSensitivity = 0.003f;
 
             void updateCamera();
     };

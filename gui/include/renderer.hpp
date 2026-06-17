@@ -11,6 +11,7 @@ namespace Morf {
     class Renderer {
         public:
             void createModels(const Model& base, const Model& target, const Diff& diff);
+            void initLighting();
             void drawModels() const;
             void unloadModels();
         

@@ -3,12 +3,57 @@
 #include "renderer.hpp"
 
 namespace Morf {
+    const char* lightingVs = R"(#version 330
+    in vec3 vertexPosition;
+    in vec3 vertexNormal;
+    uniform mat4 mvp;
+    uniform mat4 matModel;
+    out vec3 fragPosition;
+    out vec3 fragNormal;
+    void main() {
+        fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));
+        fragNormal = normalize(vec3(matModel * vec4(vertexNormal, 0.0)));
+        gl_Position = mvp * vec4(vertexPosition, 1.0);
+    }
+    )";
+    const char* lightingFs = R"(#version 330
+    in vec3 fragPosition;
+    in vec3 fragNormal;
+    uniform vec4 colDiffuse;
+    uniform vec4 ambient;
+    uniform vec3 lightPos;
+    uniform vec4 lightColor;
+    out vec4 finalColor;
+    void main() {
+        vec3 normal = normalize(fragNormal);
+        vec3 lightDir = normalize(lightPos);
+        float diff = abs(dot(normal, lightDir));
+        vec4 diffuse = diff * lightColor * colDiffuse;
+        finalColor = ambient * colDiffuse + diffuse;
+    }
+    )";
+
     void Renderer::createModels(const Model& base, const Model& target, const Diff& diff) {
         if (loaded_) unloadModels();
         commonModels_  = buildRaylibModels(target, diff.common,  LIGHTGRAY);
         addedModels_   = buildRaylibModels(target, diff.added,   {0,255,0,180});
         removedModels_ = buildRaylibModels(base,   diff.removed, {255,0,0,180});
         loaded_ = true;
+    }
+
+    void Renderer::initLighting() {
+        if (commonModels_.empty()) return;
+
+        Shader lightingShader = LoadShaderFromMemory(lightingVs, lightingFs);
+        float ambient[4]  = { 0.5f, 0.5f, 0.5f, 1.0f };
+        float lightDir[3] = { 0.5f, 1.0f, 0.8f };
+        float lightCol[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
+
+        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
+        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightPos"), lightDir, SHADER_UNIFORM_VEC3);
+        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightColor"), lightCol, SHADER_UNIFORM_VEC4);
+
+        for (auto& model : commonModels_) model.materials[0].shader = lightingShader;
     }
 
     void Renderer::drawModels() const {
@@ -38,9 +83,10 @@ namespace Morf {
 
         // Temporary mesh accumulators
         std::vector<float> vertices;
+        std::vector<float> normals;
         std::vector<unsigned short> indices;
         int currVerticeCount = 0;
-        int currTriangleCount  = 0;
+        int currTriangleCount = 0;
 
         auto createMesh = [&]() {
             if (currVerticeCount == 0) return;
@@ -53,17 +99,25 @@ namespace Morf {
             mesh.indices  = (unsigned short*)MemAlloc(indices.size() * sizeof(unsigned short));
             memcpy(mesh.vertices, vertices.data(), vertices.size() * sizeof(float));
             memcpy(mesh.indices,  indices.data(),  indices.size()  * sizeof(unsigned short));
-            UploadMesh(&mesh, false);
 
+            if (!model.normalVertices.empty()) {
+                mesh.normals = (float*)MemAlloc(normals.size() * sizeof(float));
+                memcpy(mesh.normals, normals.data(), normals.size() * sizeof(float));
+            } else {
+                mesh.normals = nullptr;
+            }
+
+            UploadMesh(&mesh, false);
             ::Model raylibModel = LoadModelFromMesh(mesh);
 
-            // TODO: Apply vertex normals here for rendering later
-            raylibModel.materials[0].shader = LoadShader(0, 0);
+            // If there are no normals, load unlit, otherwise keep default
+            if (model.normalVertices.empty()) raylibModel.materials[0].shader = LoadShader(0, 0);
             raylibModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = color;
 
             raylibModels.push_back(raylibModel);
 
             vertices.clear();
+            normals.clear();
             indices.clear();
             currVerticeCount  = 0;
             currTriangleCount = 0;
@@ -79,10 +133,17 @@ namespace Morf {
 
             unsigned short start = (unsigned short)currVerticeCount;
             for (int i = 0; i < n; ++i) {
-                const auto& vertex= model.vertices[face.vertexData[i].vIdx];
+                const auto& vertex = model.vertices[face.vertexData[i].vIdx];
                 vertices.push_back(vertex.x);
                 vertices.push_back(vertex.y);
                 vertices.push_back(vertex.z);
+
+                if (!model.normalVertices.empty() && face.vertexData[i].vnIdx >= 0) {
+                    const auto& normal = model.normalVertices[face.vertexData[i].vnIdx];
+                    normals.push_back(normal.x);
+                    normals.push_back(normal.y);
+                    normals.push_back(normal.z);
+                }
             }
 
             for (int i = 1; i < n - 1; ++i) {
