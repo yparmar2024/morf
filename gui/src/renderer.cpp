@@ -33,46 +33,94 @@ namespace Morf {
     }
     )";
 
-    void Renderer::createModels(const Model& base, const Model& target, const Diff& diff) {
+    void Renderer::createModels(const Model& base, const Model& target, const Merge& merge) {
         if (loaded_) unloadModels();
-        commonModels_  = buildRaylibModels(target, diff.common,  LIGHTGRAY);
-        addedModels_   = buildRaylibModels(target, diff.added,   {0,255,0,180});
-        removedModels_ = buildRaylibModels(base,   diff.removed, {255,0,0,180});
+        commonModels_     = buildRaylibModels(base,   merge.common,             LIGHTGRAY);
+        keptBaseModels_   = buildRaylibModels(base,   merge.acceptedFromBase,   LIGHTGRAY);
+        keptTargetModels_ = buildRaylibModels(target, merge.acceptedFromTarget, LIGHTGRAY);
+        addedModels_      = buildRaylibModels(target, merge.added,              {0,255,0,180});
+        removedModels_    = buildRaylibModels(base,   merge.removed,            {255,0,0,180});
         loaded_ = true;
     }
 
     void Renderer::initLighting() {
         if (commonModels_.empty()) return;
+        
+        static Shader lightingShader = []() {
+            Shader shader = LoadShaderFromMemory(lightingVs, lightingFs);
 
-        Shader lightingShader = LoadShaderFromMemory(lightingVs, lightingFs);
-        float ambient[4]  = { 0.5f, 0.5f, 0.5f, 1.0f };
-        float lightDir[3] = { 0.5f, 1.0f, 0.8f };
-        float lightCol[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
+            float ambient[4]  = { 0.5f, 0.5f, 0.5f, 1.0f };
+            float lightDir[3] = { 0.5f, 1.0f, 0.8f };
+            float lightCol[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
 
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightPos"), lightDir, SHADER_UNIFORM_VEC3);
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightColor"), lightCol, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, GetShaderLocation(shader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, GetShaderLocation(shader, "lightPos"), lightDir, SHADER_UNIFORM_VEC3);
+            SetShaderValue(shader, GetShaderLocation(shader, "lightColor"), lightCol, SHADER_UNIFORM_VEC4);
 
-        for (auto& model : commonModels_) model.materials[0].shader = lightingShader;
+            return shader;
+        }();
+
+        for (auto& model : commonModels_)     model.materials[0].shader = lightingShader;
+        for (auto& model : keptBaseModels_)   model.materials[0].shader = lightingShader;
+        for (auto& model : keptTargetModels_) model.materials[0].shader = lightingShader;
     }
 
     void Renderer::drawModels() const {
         if (!loaded_) return;
-        for (auto& model : commonModels_)  DrawModel(model, {0,0,0}, 1.0f, WHITE);
+        for (auto& model : commonModels_)     DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
+        for (auto& model : keptBaseModels_)   DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
+        for (auto& model : keptTargetModels_) DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
 
         BeginBlendMode(BLEND_ALPHA);
-        for (auto& model : addedModels_)   DrawModel(model, {0,0,0}, 1.0f, WHITE);
-        for (auto& model : removedModels_) DrawModel(model, {0,0,0}, 1.0f, WHITE);
+        for (auto& model : addedModels_)      DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
+        for (auto& model : removedModels_)    DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
         EndBlendMode();
+    }
+
+    void Renderer::drawHighlight(const Model& base, const Model& target, const Merge& merge) const {
+        if (!loaded_ || !merge.hasPending()) return;
+        
+        const Model* srcModel = nullptr;
+        FaceRef highlightFace;
+        if (merge.selectedIndex < merge.added.size()) {
+            srcModel = &target;
+            highlightFace = merge.added[merge.selectedIndex];
+        } else {
+            srcModel = &base;
+            highlightFace = merge.removed[merge.selectedIndex - merge.added.size()];
+        }
+
+        const auto& obj = srcModel->objects[highlightFace.objectIdx];
+        const auto& face = obj.faces[highlightFace.faceIdx];
+
+        std::vector<Vector3> points;
+        for (const auto& vData : face.vertexData) {
+            const auto& vertex = srcModel->vertices[vData.vIdx];
+            points.push_back({ vertex.x, vertex.y, vertex.z });
+        }
+
+        Color highlightColor = { 255, 255, 255, 100 };
+        for (std::size_t i = 0; i < points.size() - 1; ++i) {
+            DrawTriangle3D(points[0], points[i], points[i + 1], highlightColor);
+        }
+
+        Color edgeColor = { 0, 255, 255, 255 };
+        for (std::size_t i = 0; i < points.size(); ++i) {
+            DrawLine3D(points[i], points[(i + 1) % points.size()], edgeColor);
+        }
     }
 
     void Renderer::unloadModels() {
         if (!loaded_) { return; }
-        for (auto& model : commonModels_)  UnloadModel(model);
-        for (auto& model : addedModels_)   UnloadModel(model);
-        for (auto& model : removedModels_) UnloadModel(model);
+        for (auto& model : commonModels_)     UnloadModel(model);
+        for (auto& model : keptBaseModels_)   UnloadModel(model);
+        for (auto& model : keptTargetModels_) UnloadModel(model);
+        for (auto& model : addedModels_)      UnloadModel(model);
+        for (auto& model : removedModels_)    UnloadModel(model);
 
         commonModels_.clear();
+        keptBaseModels_.clear();
+        keptTargetModels_.clear();
         addedModels_.clear();
         removedModels_.clear();
         loaded_ = false;
