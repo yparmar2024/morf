@@ -1,6 +1,6 @@
 // morf - gui/src/renderer.cpp
-#include "raylib.h"
 #include "renderer.hpp"
+#include "rlgl.h"
 
 namespace Morf {
     const char* lightingVs = R"(#version 330
@@ -104,7 +104,7 @@ namespace Morf {
             DrawTriangle3D(points[0], points[i], points[i + 1], highlightColor);
         }
 
-        Color edgeColor = { 0, 255, 255, 255 };
+        Color edgeColor = { 255, 255, 255, 255 };
         for (std::size_t i = 0; i < points.size(); ++i) {
             DrawLine3D(points[i], points[(i + 1) % points.size()], edgeColor);
         }
