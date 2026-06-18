@@ -17,10 +17,12 @@ add_library(morfGui STATIC
     src/renderer.cpp
 )
 
-# Expose our headers to consumers
+# Expose our headers to consumers and fetch raygui
 target_include_directories(morfGui
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE
+        ${raylib_SOURCE_DIR}/examples/shapes
 )
 
 # Link raylib and core libraries
