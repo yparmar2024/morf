@@ -23,9 +23,9 @@ namespace Morf {
 
     struct Diff {
         bool hasDiff = false;
+        std::vector<FaceRef> common;
         std::vector<FaceRef> added;
         std::vector<FaceRef> removed;
-        std::vector<FaceRef> common;
     };
 
     class DiffEngine {

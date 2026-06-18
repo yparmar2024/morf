@@ -1,7 +1,8 @@
 // morf - gui/src/application.cpp
 #include "application.hpp"
-#include "renderer.hpp"
 #include "rlgl.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 #include <cmath>
 
 namespace Morf {
@@ -15,35 +16,34 @@ namespace Morf {
         camera_.projection = CAMERA_PERSPECTIVE;
     }
 
-    void Application::run(const Model& base, const Model& target, const Diff& diff) {
+    void Application::run(const Model& base, const Model& target, Diff& diff) {
         InitWindow(width_, height_, "morf - Raylib Viewer");
         rlDisableBackfaceCulling();
         SetTargetFPS(60);
 
+        Merge merge = MergeEngine::create(diff);
         Renderer renderer;
-        renderer.createModels(base, target, diff);
+        renderer.createModels(base, target, merge);
         renderer.initLighting();
 
-        while(!WindowShouldClose()) {
+        while (!WindowShouldClose()) {
             updateCamera();
             
             BeginDrawing();
             ClearBackground(BLACK);
             BeginMode3D(camera_);
 
-                DrawGrid(10, 1.0f);
                 renderer.drawModels();
+                renderer.drawHighlight(base, target, merge);
 
             EndMode3D();
 
-            if (isMergeMode) {
-                // TODO: Add merge ImGui UI
-                continue;
-            } else {
-                DrawText("Right-drag to orbit | Scroll to zoom", 10, 10, 20, LIGHTGRAY);
-                DrawFPS(10, 40);
-            }
+            DrawText("Left-drag to move\n\nRight-drag to orbit\n\nScroll to zoom", 10, 10, 20, LIGHTGRAY);
+            DrawFPS(10, 100);
 
+            if (isMergeMode) {
+                buildMergePanel(base, target, merge, renderer);
+            } 
             EndDrawing();
         }
         renderer.unloadModels();
@@ -94,5 +94,76 @@ namespace Morf {
         float z = target_.z + dist_ * cosf(pitch_) * sinf(yaw_);
         camera_.position = { x, y, z };
         camera_.target   = target_;
+    }
+
+    void Application::buildMergePanel(const Model& base, const Model& target, Merge& merge, Renderer& renderer) {
+        const float panelW  = static_cast<float>(width_) / 5.0f;
+        const float panelH  = static_cast<float>(height_) / 3.0f;
+        const float marginR = (0.02f) * static_cast<float>(width_);
+        const float marginT = (0.02f) * static_cast<float>(width_);
+
+        float panelX = static_cast<float>(width_) - panelW - marginR;
+        float panelY = marginT;
+
+        const float padX    = (0.05f) * panelW;
+        const float padY    = (0.04f) * panelH;
+        const float spacing = (0.015f) * panelH;
+
+        const float labelH  = (0.08f) * panelH;
+        const float buttonH = (0.09f) * panelH;
+
+        Rectangle panel = { panelX, panelY, panelW, panelH };
+        GuiWindowBox(panel, "Merge");
+
+        const float innerX = panelX + padX;
+        const float innerW = panelW - 2.0f * padX;
+        float currY = panelY + 2.0f * padY;
+
+        if (merge.hasPending()) {
+            const bool isAdd = (merge.selectedIndex < merge.added.size());
+            const FaceRef& faceRef = isAdd
+                ? merge.added[merge.selectedIndex]
+                : merge.removed[merge.selectedIndex - merge.added.size()];
+            const auto& obj = (isAdd ? target : base).objects[faceRef.objectIdx];
+            const auto& face = obj.faces[faceRef.faceIdx];
+            const int vertexCount = static_cast<int>(face.vertexData.size());
+
+            const char* changeType = isAdd ? "Added" : "Removed";
+            GuiLabel({ innerX, currY, innerW, labelH },
+                TextFormat("%s face (%d vertiecs) in '%s'",
+                    changeType, vertexCount, obj.name.c_str()));
+
+            currY += labelH + spacing;
+
+            GuiLabel({ innerX, currY, innerW, labelH },
+                TextFormat("Change %d / %d",
+                    merge.selectedIndex + 1, merge.totalChanges()));
+
+            currY += labelH + spacing;
+
+            const float halfW = (innerW - spacing) / 2.0f;
+            if (GuiButton({ innerX, currY, halfW, buttonH }, "Accept")) {
+                MergeEngine::accept(merge);
+                renderer.createModels(base, target, merge);
+                renderer.initLighting();
+            }
+            if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Reject")) {
+                MergeEngine::reject(merge);
+                renderer.createModels(base, target, merge);
+                renderer.initLighting();
+            }
+            currY += buttonH + spacing;
+
+            if (GuiButton({ innerX, currY, halfW, buttonH }, "Previous")) {
+                int total = merge.totalChanges();
+                if (total > 0) merge.selectedIndex = (merge.selectedIndex - 1 + total) % total;
+            }
+            if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Next")) {
+                int total = merge.totalChanges();
+                if (total > 0) merge.selectedIndex = (merge.selectedIndex + 1) % total;
+            }
+        } else {
+            GuiLabel({ innerX, currY, innerW, labelH }, "All changes resolved.");
+        }
     }
 } // namespace Morf

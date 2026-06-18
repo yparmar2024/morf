@@ -5,6 +5,8 @@
 #include "raylib.h"
 #include "model.hpp"
 #include "diff.hpp"
+#include "merge.hpp"
+#include "renderer.hpp"
 
 namespace Morf {
     class Application {
@@ -13,7 +15,7 @@ namespace Morf {
 
             bool isMergeMode = false;
 
-            void run(const Model& base, const Model& target, const Diff& diff);
+            void run(const Model& base, const Model& target, Diff& diff);
 
         private:
             int width_, height_;
@@ -29,5 +31,6 @@ namespace Morf {
             const float panSensitivity = 0.003f;
 
             void updateCamera();
+            void buildMergePanel(const Model& base, const Model& target, Merge& merge, Renderer& renderer);
     };
 } // namespace Morf

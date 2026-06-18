@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     Morf::Diff diff = Morf::DiffEngine::compare(baseModel, targetModel);
 
     Morf::Application app(1600, 900);
-    app.isMergeMode = false;
+    app.isMergeMode = true;
     app.run(baseModel, targetModel, diff);
 
     return 0;
