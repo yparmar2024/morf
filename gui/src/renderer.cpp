@@ -38,8 +38,8 @@ namespace Morf {
         commonModels_     = buildRaylibModels(base,   merge.common,             LIGHTGRAY);
         keptBaseModels_   = buildRaylibModels(base,   merge.acceptedFromBase,   LIGHTGRAY);
         keptTargetModels_ = buildRaylibModels(target, merge.acceptedFromTarget, LIGHTGRAY);
-        addedModels_      = buildRaylibModels(target, merge.added,              {0,255,0,180});
-        removedModels_    = buildRaylibModels(base,   merge.removed,            {255,0,0,180});
+        addedModels_      = buildRaylibModels(target, merge.added,     { 0, 255, 0, 180 });
+        removedModels_    = buildRaylibModels(base,   merge.removed,   { 255, 0, 0, 180 });
         loaded_ = true;
     }
 
@@ -53,8 +53,8 @@ namespace Morf {
             float lightDir[3] = { 0.5f, 1.0f, 0.8f };
             float lightCol[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
 
-            SetShaderValue(shader, GetShaderLocation(shader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
-            SetShaderValue(shader, GetShaderLocation(shader, "lightPos"), lightDir, SHADER_UNIFORM_VEC3);
+            SetShaderValue(shader, GetShaderLocation(shader, "ambient"),    ambient,  SHADER_UNIFORM_VEC4);
+            SetShaderValue(shader, GetShaderLocation(shader, "lightPos"),   lightDir, SHADER_UNIFORM_VEC3);
             SetShaderValue(shader, GetShaderLocation(shader, "lightColor"), lightCol, SHADER_UNIFORM_VEC4);
 
             return shader;
