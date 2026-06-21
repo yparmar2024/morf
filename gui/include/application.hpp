@@ -31,6 +31,7 @@ namespace Morf {
             const float panSensitivity = 0.003f;
 
             void updateCamera();
+            void focusOnFace(const Model& base, const Model& target, const Merge& merge);
             void buildMergePanel(const Model& base, const Model& target, Merge& merge, Renderer& renderer);
     };
 } // namespace Morf

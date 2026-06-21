@@ -146,24 +146,60 @@ namespace Morf {
                 MergeEngine::accept(merge);
                 renderer.createModels(base, target, merge);
                 renderer.initLighting();
+                focusOnFace(base, target, merge);
             }
             if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Reject")) {
                 MergeEngine::reject(merge);
                 renderer.createModels(base, target, merge);
                 renderer.initLighting();
+                focusOnFace(base, target, merge);
             }
             currY += buttonH + spacing;
 
             if (GuiButton({ innerX, currY, halfW, buttonH }, "Previous")) {
                 int total = merge.totalChanges();
                 if (total > 0) merge.selectedIndex = (merge.selectedIndex - 1 + total) % total;
+                focusOnFace(base, target, merge);
             }
             if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Next")) {
                 int total = merge.totalChanges();
                 if (total > 0) merge.selectedIndex = (merge.selectedIndex + 1) % total;
+                focusOnFace(base, target, merge);
             }
         } else {
             GuiLabel({ innerX, currY, innerW, labelH }, "All changes resolved.");
         }
+    }
+
+    void Application::focusOnFace(const Model& base, const Model& target, const Merge& merge) {
+        if (!merge.hasPending()) return;
+
+        const Model* srcModel = nullptr;
+        FaceRef faceRef;
+        if (merge.selectedIndex < merge.added.size()) {
+            srcModel = &target;
+            faceRef = merge.added[merge.selectedIndex];
+        } else {
+            srcModel = &base;
+            faceRef = merge.removed[merge.selectedIndex - merge.added.size()];
+        }
+
+        const auto& obj = srcModel->objects[faceRef.objectIdx];
+        const auto& face = obj.faces[faceRef.faceIdx];
+        int n = (int)face.vertexData.size();
+
+        Vector3 center = { 0, 0, 0 };
+        for (int i = 0; i < n; ++i) {
+            const auto& vertex = srcModel->vertices[face.vertexData[i].vIdx];
+            center.x += vertex.x;
+            center.y += vertex.y;
+            center.z += vertex.z;
+        }
+        float invN = 1.0f / n;
+        center.x *= invN;
+        center.y *= invN;
+        center.z *= invN;
+
+        target_ = center;
     }
 } // namespace Morf
