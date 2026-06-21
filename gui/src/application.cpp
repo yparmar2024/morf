@@ -1,8 +1,8 @@
 // morf - gui/src/application.cpp
-#include "application.hpp"
-#include "rlgl.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+#include "application.hpp"
+#include "rlgl.h"
 #include <cmath>
 
 namespace Morf {
@@ -30,7 +30,7 @@ namespace Morf {
             updateCamera();
             
             BeginDrawing();
-            ClearBackground(BLACK);
+            ClearBackground(RAYWHITE);
             BeginMode3D(camera_);
 
                 renderer.drawModels();
@@ -46,6 +46,7 @@ namespace Morf {
             } 
             EndDrawing();
         }
+        rlEnableBackfaceCulling();
         renderer.unloadModels();
         CloseWindow();
     }
