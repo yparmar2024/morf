@@ -139,24 +139,23 @@ namespace Morf {
         auto createMesh = [&]() {
             if (currVerticeCount == 0) return;
 
-            // Current mesh attributes
-            Mesh mesh = { 0 };
-            mesh.vertexCount   = currVerticeCount;
-            mesh.triangleCount = currTriangleCount;
-            mesh.vertices = (float*)MemAlloc(vertices.size() * sizeof(float));
-            mesh.indices  = (unsigned short*)MemAlloc(indices.size() * sizeof(unsigned short));
-            memcpy(mesh.vertices, vertices.data(), vertices.size() * sizeof(float));
-            memcpy(mesh.indices,  indices.data(),  indices.size()  * sizeof(unsigned short));
+            Mesh currMesh = { 0 };
+            currMesh.vertexCount   = currVerticeCount;
+            currMesh.triangleCount = currTriangleCount;
+            currMesh.vertices      = (float*)MemAlloc(vertices.size() * sizeof(float));
+            currMesh.indices       = (unsigned short*)MemAlloc(indices.size() * sizeof(unsigned short));
+            memcpy(currMesh.vertices, vertices.data(), vertices.size() * sizeof(float));
+            memcpy(currMesh.indices,  indices.data(),  indices.size()  * sizeof(unsigned short));
 
             if (!model.normalVertices.empty()) {
-                mesh.normals = (float*)MemAlloc(normals.size() * sizeof(float));
-                memcpy(mesh.normals, normals.data(), normals.size() * sizeof(float));
+                currMesh.normals = (float*)MemAlloc(normals.size() * sizeof(float));
+                memcpy(currMesh.normals, normals.data(), normals.size() * sizeof(float));
             } else {
-                mesh.normals = nullptr;
+                currMesh.normals = nullptr;
             }
 
-            UploadMesh(&mesh, false);
-            ::Model raylibModel = LoadModelFromMesh(mesh);
+            UploadMesh(&currMesh, false);
+            ::Model raylibModel = LoadModelFromMesh(currMesh);
 
             // If there are no normals, load unlit, otherwise keep default
             if (model.normalVertices.empty()) raylibModel.materials[0].shader = LoadShader(0, 0);
@@ -176,7 +175,8 @@ namespace Morf {
             int n = (int)face.vertexData.size();
             if (n < 3) continue;
 
-            // Raylib enforces all vertices in meshes to be below USHRT_MAX
+            // Raylib enforces all vertices in meshes to be below USHRT_MAX,
+            // so we create a new mesh everytime we surpass that limit
             if (currVerticeCount + n > USHRT_MAX) createMesh();
 
             unsigned short start = (unsigned short)currVerticeCount;
