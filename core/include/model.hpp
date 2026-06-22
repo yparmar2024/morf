@@ -4,6 +4,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace Morf {
     struct Vertex {
@@ -31,13 +32,24 @@ namespace Morf {
     };
 
     struct VertexData {
-        int vIdx = -1;
-        int vtIdx = -1;
-        int vnIdx = -1;
+        int vIdx = -1, vtIdx = -1, vnIdx = -1;
+    };
+
+    struct RGB {
+        float r, g, b;
+    };
+
+    struct Material {
+        RGB ambient{  0.8f, 0.8f, 0.8f };
+        RGB diffuse{  0.8f, 0.8f, 0.8f };
+        RGB specular{ 1.0f, 1.0f, 1.0f };
+        float exponent = 0.0f;
+        std::string textureMap;
     };
 
     struct Face {
         std::vector<VertexData> vertexData;
+        std::string materialName;
 
         std::vector<Vertex> getCanonicalForm(const std::vector<Vertex>& vertices) const {
             const std::size_t n = vertexData.size();
@@ -81,5 +93,6 @@ namespace Morf {
         std::vector<VertexTexture> textureVertices;
         std::vector<VertexNormal> normalVertices;
         std::vector<Object> objects;
+        std::unordered_map<std::string, Material> materials;
     };
 } // namespace Morf
