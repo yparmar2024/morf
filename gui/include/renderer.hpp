@@ -18,11 +18,11 @@ namespace Morf {
             void unloadModels();
         
         private:
-            std::vector<::Model> commonModels_{0};
-            std::vector<::Model> keptBaseModels_{0};
-            std::vector<::Model> keptTargetModels_{0};
-            std::vector<::Model> addedModels_{0};
-            std::vector<::Model> removedModels_{0};
+            std::vector<::Model> commonModels_{ 0 };
+            std::vector<::Model> keptBaseModels_{ 0 };
+            std::vector<::Model> keptTargetModels_{ 0 };
+            std::vector<::Model> addedModels_{ 0 };
+            std::vector<::Model> removedModels_{ 0 };
 
             bool loaded_ = false;
             

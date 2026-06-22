@@ -17,6 +17,7 @@ Release/
 # Ignore any testing files
 *.obj
 *.png
+*.jpg
 *.mtl
 
 # Ignore the subfolders where CMake downloads Raylib, ImGui, and nanoflann

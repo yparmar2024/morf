@@ -64,7 +64,7 @@ namespace Morf {
                     }
                     face.vertexData.push_back(vData);
                 }
-                face.mtlName = currMaterialName;
+                face.materialName = currMaterialName;
                 model.objects[objectIdx].faces.push_back(face);
             } else if (type == "o") {
                 std::string name;
