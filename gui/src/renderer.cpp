@@ -34,6 +34,24 @@ namespace Morf {
     }
     )";
 
+    Vector3 computeFaceNormal(const Model& model, const Face& face) {
+        Vector3 normal = { 0.0f, 0.0f, 0.0f };
+        const std::size_t n = face.vertexData.size();
+
+        for (std::size_t i = 0; i < n; ++i) {
+            const auto& curr = model.vertices[face.vertexData[i].vIdx];
+            const auto& next = model.vertices[face.vertexData[(i + 1) % n].vIdx];
+            normal.x += (curr.y - next.y) * (curr.z + next.z);
+            normal.y += (curr.z - next.z) * (curr.x + next.x);
+            normal.z += (curr.x - next.x) * (curr.y + next.y);
+        }
+
+        float len = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+        if (len < 1e-8f) return { 0.0f, 0.0f, 1.0f };
+
+        return { normal.x / len, normal.y / len, normal.z / len };
+    }
+
     void Renderer::createModels(const Model& base, const Model& target, const Merge& merge) {
         if (loaded_) unloadModels();
         commonModel_     = buildRaylibModel(base,   merge.common,             LIGHTGRAY);
@@ -146,24 +164,6 @@ namespace Morf {
         std::vector<float> normals;
         std::vector<unsigned short> indices;
 
-        auto computeFaceNormal = [&](const Face& face) -> Vector3 {
-            Vector3 normal = { 0.0f, 0.0f, 0.0f };
-            const std::size_t n = face.vertexData.size();
-
-            for (std::size_t i = 0; i < n; ++i) {
-                const auto& curr = model.vertices[face.vertexData[i].vIdx];
-                const auto& next = model.vertices[face.vertexData[(i + 1) % n].vIdx];
-                normal.x += (curr.y - next.y) * (curr.z + next.z);
-                normal.y += (curr.z - next.z) * (curr.x + next.x);
-                normal.z += (curr.x - next.x) * (curr.y + next.y);
-            }
-
-            float len = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-            if (len < 1e-8f) return { 0.0f, 0.0f, 1.0f };
-
-            return { normal.x / len, normal.y / len, normal.z / len };
-        };
-
         auto createMesh = [&]() {
             if (vertexCount == 0) return;
 
@@ -210,7 +210,7 @@ namespace Morf {
 
             Vector3 computedNormal{};
             if (!hasNormal) {
-                computedNormal = computeFaceNormal(face);
+                computedNormal = computeFaceNormal(model, face);
             }
 
             for (std::size_t i = 0; i < numVertices; ++i) {

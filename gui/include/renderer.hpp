@@ -8,6 +8,8 @@
 #include <vector>
 
 namespace Morf {
+    Vector3 computeFaceNormal(const Model& model, const Face& face);
+
     class Renderer {
         public:
             void createModels(const Model& base, const Model& target, const Merge& merge);

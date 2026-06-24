@@ -188,6 +188,7 @@ namespace Morf {
         const auto& obj = srcModel->objects[faceRef.objectIdx];
         const auto& face = obj.faces[faceRef.faceIdx];
         int n = (int)face.vertexData.size();
+        if (n < 3) return;
 
         Vector3 center = { 0, 0, 0 };
         for (int i = 0; i < n; ++i) {
@@ -202,5 +203,12 @@ namespace Morf {
         center.z *= invN;
 
         target_ = center;
+
+        Vector3 normal = computeFaceNormal(*srcModel, face);
+        pitch_ = asinf(-normal.y);
+        yaw_   = atan2f(-normal.z, -normal.x);
+
+        if (pitch_ > 1.5f)  pitch_ = 1.5f;
+        if (pitch_ < -1.5f) pitch_ = -1.5f;
     }
 } // namespace Morf
