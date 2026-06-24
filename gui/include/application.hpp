@@ -21,10 +21,6 @@ namespace Morf {
             int width_, height_;
 
             Camera3D camera_;
-            float dist_    = 5.0f;
-            float yaw_     = 0.0f;
-            float pitch_   = 0.5f;
-            Vector3 target_ = { 0.5f, 0.5f, 0.5f };
 
             const float rotationalSens = 0.003f;
             const float zoomSpeed      = 0.5f;
