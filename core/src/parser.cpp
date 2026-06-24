@@ -56,6 +56,7 @@ namespace Morf {
                             int raw = std::stoi(part);
                             if (raw == 0) { validFace = false; break; }
 
+                            // Relative index normalization
                             int idx;
                             if (raw > 0) {
                                 idx = raw - 1;

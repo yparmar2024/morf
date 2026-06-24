@@ -4,7 +4,6 @@
 #pragma once
 #include "raylib.h"
 #include "model.hpp"
-#include "diff.hpp"
 #include "merge.hpp"
 #include <vector>
 
@@ -18,14 +17,14 @@ namespace Morf {
             void unloadModels();
         
         private:
-            std::vector<::Model> commonModels_{ 0 };
-            std::vector<::Model> keptBaseModels_{ 0 };
-            std::vector<::Model> keptTargetModels_{ 0 };
-            std::vector<::Model> addedModels_{ 0 };
-            std::vector<::Model> removedModels_{ 0 };
+            ::Model commonModel_     = { 0 };
+            ::Model keptBaseModel_   = { 0 };
+            ::Model keptTargetModel_ = { 0 };
+            ::Model addedModel_      = { 0 };
+            ::Model removedModel_    = { 0 };
 
             bool loaded_ = false;
             
-            std::vector<::Model> buildRaylibModels(const Model& model, const std::vector<FaceRef>& faces, Color color) const;
+            ::Model buildRaylibModel(const Model& model, const std::vector<FaceRef>& faces, Color color) const;
     };
 } // namespace Morf

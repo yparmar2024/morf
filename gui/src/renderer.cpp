@@ -1,6 +1,7 @@
 // morf - gui/src/renderer.cpp
 #include "renderer.hpp"
 #include "rlgl.h"
+#include "raymath.h"
 
 namespace Morf {
     const char* lightingVs = R"(#version 330
@@ -35,17 +36,15 @@ namespace Morf {
 
     void Renderer::createModels(const Model& base, const Model& target, const Merge& merge) {
         if (loaded_) unloadModels();
-        commonModels_     = buildRaylibModels(base,   merge.common,             LIGHTGRAY);
-        keptBaseModels_   = buildRaylibModels(base,   merge.acceptedFromBase,   LIGHTGRAY);
-        keptTargetModels_ = buildRaylibModels(target, merge.acceptedFromTarget, LIGHTGRAY);
-        addedModels_      = buildRaylibModels(target, merge.added,     { 0, 255, 0, 180 });
-        removedModels_    = buildRaylibModels(base,   merge.removed,   { 255, 0, 0, 180 });
+        commonModel_     = buildRaylibModel(base,   merge.common,             LIGHTGRAY);
+        keptBaseModel_   = buildRaylibModel(base,   merge.acceptedFromBase,   LIGHTGRAY);
+        keptTargetModel_ = buildRaylibModel(target, merge.acceptedFromTarget, LIGHTGRAY);
+        addedModel_      = buildRaylibModel(target, merge.added,     { 0, 255, 0, 180 });
+        removedModel_    = buildRaylibModel(base,   merge.removed,   { 255, 0, 0, 180 });
         loaded_ = true;
     }
 
     void Renderer::initLighting() {
-        if (commonModels_.empty()) return;
-        
         static Shader lightingShader = []() {
             Shader shader = LoadShaderFromMemory(lightingVs, lightingFs);
 
@@ -60,20 +59,26 @@ namespace Morf {
             return shader;
         }();
 
-        for (auto& model : commonModels_)     model.materials[0].shader = lightingShader;
-        for (auto& model : keptBaseModels_)   model.materials[0].shader = lightingShader;
-        for (auto& model : keptTargetModels_) model.materials[0].shader = lightingShader;
+        auto applyShader = [&](::Model& model) {
+            for (std::size_t i = 0; i < model.materialCount; ++i) {
+                model.materials[i].shader = lightingShader;
+            }
+        };
+        
+        applyShader(commonModel_);
+        applyShader(keptBaseModel_);
+        applyShader(keptTargetModel_);
     }
 
     void Renderer::drawModels() const {
         if (!loaded_) return;
-        for (auto& model : commonModels_)     DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
-        for (auto& model : keptBaseModels_)   DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
-        for (auto& model : keptTargetModels_) DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
+        DrawModel(commonModel_,     { 0, 0, 0 }, 1.0f, WHITE);
+        DrawModel(keptBaseModel_,   { 0, 0, 0 }, 1.0f, WHITE);
+        DrawModel(keptTargetModel_, { 0, 0, 0 }, 1.0f, WHITE);
 
         BeginBlendMode(BLEND_ALPHA);
-        for (auto& model : addedModels_)      DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
-        for (auto& model : removedModels_)    DrawModel(model, { 0, 0, 0 }, 1.0f, WHITE);
+        DrawModel(addedModel_,      { 0, 0, 0 }, 1.0f, WHITE);
+        DrawModel(removedModel_,    { 0, 0, 0 }, 1.0f, WHITE);
         EndBlendMode();
     }
 
@@ -99,8 +104,10 @@ namespace Morf {
             points.push_back({ vertex.x, vertex.y, vertex.z });
         }
 
+        if (points.size() < 3) return;
+
         Color highlightColor = { 255, 255, 255, 100 };
-        for (std::size_t i = 0; i < points.size() - 1; ++i) {
+        for (std::size_t i = 1; i < points.size() - 1; ++i) {
             DrawTriangle3D(points[0], points[i], points[i + 1], highlightColor);
         }
 
@@ -112,99 +119,156 @@ namespace Morf {
 
     void Renderer::unloadModels() {
         if (!loaded_) { return; }
-        for (auto& model : commonModels_)     UnloadModel(model);
-        for (auto& model : keptBaseModels_)   UnloadModel(model);
-        for (auto& model : keptTargetModels_) UnloadModel(model);
-        for (auto& model : addedModels_)      UnloadModel(model);
-        for (auto& model : removedModels_)    UnloadModel(model);
+        UnloadModel(commonModel_);
+        UnloadModel(keptBaseModel_);
+        UnloadModel(keptTargetModel_);
+        UnloadModel(addedModel_);
+        UnloadModel(removedModel_);
 
-        commonModels_.clear();
-        keptBaseModels_.clear();
-        keptTargetModels_.clear();
-        addedModels_.clear();
-        removedModels_.clear();
+        commonModel_     = { 0 };
+        keptBaseModel_   = { 0 };
+        keptTargetModel_ = { 0 };
+        addedModel_      = { 0 };
+        removedModel_    = { 0 };
+
         loaded_ = false;
     }
 
-    std::vector<::Model> Renderer::buildRaylibModels(const Model& model, const std::vector<FaceRef>& faces, Color color) const {
-        std::vector<::Model> raylibModels;
+    ::Model Renderer::buildRaylibModel(const Model& model, const std::vector<FaceRef>& faces, Color color) const {
+        ::Model raylibModel = { 0 };
+        std::vector<Mesh> meshes;
 
         // Temporary mesh accumulators
+        int vertexCount = 0;
+        int triangleCount = 0;
         std::vector<float> vertices;
+        std::vector<float> texcoords;
         std::vector<float> normals;
         std::vector<unsigned short> indices;
-        int currVerticeCount = 0;
-        int currTriangleCount = 0;
 
-        auto createMesh = [&]() {
-            if (currVerticeCount == 0) return;
+        auto computeFaceNormal = [&](const Face& face) -> Vector3 {
+            Vector3 normal = { 0.0f, 0.0f, 0.0f };
+            const std::size_t n = face.vertexData.size();
 
-            Mesh currMesh = { 0 };
-            currMesh.vertexCount   = currVerticeCount;
-            currMesh.triangleCount = currTriangleCount;
-            currMesh.vertices      = (float*)MemAlloc(vertices.size() * sizeof(float));
-            currMesh.indices       = (unsigned short*)MemAlloc(indices.size() * sizeof(unsigned short));
-            memcpy(currMesh.vertices, vertices.data(), vertices.size() * sizeof(float));
-            memcpy(currMesh.indices,  indices.data(),  indices.size()  * sizeof(unsigned short));
-
-            if (!model.normalVertices.empty()) {
-                currMesh.normals = (float*)MemAlloc(normals.size() * sizeof(float));
-                memcpy(currMesh.normals, normals.data(), normals.size() * sizeof(float));
-            } else {
-                currMesh.normals = nullptr;
+            for (std::size_t i = 0; i < n; ++i) {
+                const auto& curr = model.vertices[face.vertexData[i].vIdx];
+                const auto& next = model.vertices[face.vertexData[(i + 1) % n].vIdx];
+                normal.x += (curr.y - next.y) * (curr.z + next.z);
+                normal.y += (curr.z - next.z) * (curr.x + next.x);
+                normal.z += (curr.x - next.x) * (curr.y + next.y);
             }
 
-            UploadMesh(&currMesh, false);
-            ::Model raylibModel = LoadModelFromMesh(currMesh);
+            float len = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+            if (len < 1e-8f) return { 0.0f, 0.0f, 1.0f };
 
-            // If there are no normals, load unlit, otherwise keep default
-            if (model.normalVertices.empty()) raylibModel.materials[0].shader = LoadShader(0, 0);
-            raylibModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = color;
-
-            raylibModels.push_back(raylibModel);
-
-            vertices.clear();
-            normals.clear();
-            indices.clear();
-            currVerticeCount  = 0;
-            currTriangleCount = 0;
+            return { normal.x / len, normal.y / len, normal.z / len };
         };
 
-        for (const auto& ref : faces) {
-            const auto& face = model.objects[ref.objectIdx].faces[ref.faceIdx];
-            int n = (int)face.vertexData.size();
-            if (n < 3) continue;
+        auto createMesh = [&]() {
+            if (vertexCount == 0) return;
 
-            // Raylib enforces all vertices in meshes to be below USHRT_MAX,
-            // so we create a new mesh everytime we surpass that limit
-            if (currVerticeCount + n > USHRT_MAX) createMesh();
+            Mesh mesh = { 0 };
+            mesh.vertexCount   = vertexCount;
+            mesh.triangleCount = triangleCount;
+            mesh.vertices      = (float*)MemAlloc(vertices.size() * sizeof(float));
+            mesh.indices       = (unsigned short*)MemAlloc(indices.size() * sizeof(unsigned short));
 
-            unsigned short start = (unsigned short)currVerticeCount;
-            for (int i = 0; i < n; ++i) {
+            memcpy(mesh.vertices, vertices.data(), vertices.size() * sizeof(float));
+            memcpy(mesh.indices,  indices.data(),  indices.size()  * sizeof(unsigned short));
+
+            if (!texcoords.empty()) {
+                mesh.texcoords = (float*)MemAlloc(texcoords.size() * sizeof(float));
+                memcpy(mesh.texcoords, texcoords.data(), texcoords.size() * sizeof(float));
+            }
+            if (!normals.empty()) {
+                mesh.normals = (float*)MemAlloc(normals.size() * sizeof(float));
+                memcpy(mesh.normals, normals.data(), normals.size() * sizeof(float));
+            }
+            
+            UploadMesh(&mesh, false);
+            meshes.push_back(mesh);
+
+            vertices.clear();
+            texcoords.clear();
+            normals.clear();
+            indices.clear();
+            vertexCount   = 0;
+            triangleCount = 0;
+        };
+        
+        for (const auto& faceRef : faces) {
+            const auto& face = model.objects[faceRef.objectIdx].faces[faceRef.faceIdx];
+            int numVertices = (int)face.vertexData.size();
+            if (numVertices < 3) continue;
+
+            if (vertexCount + numVertices > USHRT_MAX) createMesh();
+
+            bool hasNormal = true;
+            for (const auto& vertexData : face.vertexData) {
+                if (vertexData.vnIdx < 0) { hasNormal = false; break; }
+            }
+
+            Vector3 computedNormal{};
+            if (!hasNormal) {
+                computedNormal = computeFaceNormal(face);
+            }
+
+            for (std::size_t i = 0; i < numVertices; ++i) {
                 const auto& vertex = model.vertices[face.vertexData[i].vIdx];
                 vertices.push_back(vertex.x);
                 vertices.push_back(vertex.y);
                 vertices.push_back(vertex.z);
 
-                if (!model.normalVertices.empty() && face.vertexData[i].vnIdx >= 0) {
-                    const auto& normal = model.normalVertices[face.vertexData[i].vnIdx];
-                    normals.push_back(normal.x);
-                    normals.push_back(normal.y);
-                    normals.push_back(normal.z);
+                if (!model.textureVertices.empty() && face.vertexData[i].vtIdx >= 0) {
+                    const auto& textureVertex = model.textureVertices[face.vertexData[i].vtIdx];
+                    // Raylib only allows u,v mapping, ignore w
+                    // TODO: Implement custom shader to take in w
+                    texcoords.push_back(textureVertex.u);
+                    texcoords.push_back(textureVertex.v);
+                } else { texcoords.push_back(0.0f); texcoords.push_back(0.0f); }
+                if (hasNormal) {
+                    const auto& normalVertex = model.normalVertices[face.vertexData[i].vnIdx];
+                    normals.push_back(normalVertex.x);
+                    normals.push_back(normalVertex.y);
+                    normals.push_back(normalVertex.z);
+                } else {
+                    normals.push_back(computedNormal.x);
+                    normals.push_back(computedNormal.y);
+                    normals.push_back(computedNormal.z);
                 }
             }
-
-            for (int i = 1; i < n - 1; ++i) {
+            
+            unsigned short start = (unsigned short)vertexCount;
+            for (std::size_t i = 1; i < numVertices - 1; ++i) {
                 indices.push_back(start);
                 indices.push_back(start + (unsigned short)(i));
                 indices.push_back(start + (unsigned short)(i + 1));
             }
 
-            currVerticeCount += n;
-            currTriangleCount += (n - 2);
+            vertexCount   += numVertices;
+            triangleCount += (numVertices - 2);
         }
 
         createMesh();
-        return raylibModels;
+
+        if (meshes.empty()) {
+            ::Model empty = { 0 };
+            return empty;
+        }
+
+        raylibModel.transform = MatrixIdentity();
+        raylibModel.meshCount = (int)meshes.size();
+        raylibModel.meshes = (::Mesh*)MemAlloc(meshes.size() * sizeof(::Mesh));
+        memcpy(raylibModel.meshes, meshes.data(), meshes.size() * sizeof(::Mesh));
+
+        raylibModel.materialCount = 1;
+        raylibModel.materials = (::Material*)MemAlloc(sizeof(::Material));
+        raylibModel.materials[0] = LoadMaterialDefault();
+        raylibModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = color;
+
+        raylibModel.meshMaterial = (int*)MemAlloc(meshes.size() * sizeof(int));
+        for (std::size_t i = 0; i < meshes.size(); ++i) raylibModel.meshMaterial[i] = 0;
+
+        return raylibModel;
     }
 } // namespace Morf
