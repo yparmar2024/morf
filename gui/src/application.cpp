@@ -135,13 +135,11 @@ namespace Morf {
                 MergeEngine::accept(merge);
                 renderer.createModels(base, target, merge);
                 renderer.initLighting();
-                focusOnFace(base, target, merge);
             }
             if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Reject")) {
                 MergeEngine::reject(merge);
                 renderer.createModels(base, target, merge);
                 renderer.initLighting();
-                focusOnFace(base, target, merge);
             }
             currY += buttonH + spacing;
 
