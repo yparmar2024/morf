@@ -1,35 +1,70 @@
 // morf - cli/main.cpp
-#include "application.hpp"
-#include "parser.hpp"
-#include "diff.hpp"
+#include "command/diff.hpp"
+#include "command/merge.hpp"
 #include <iostream>
-#include <filesystem>
+#include <string>
+
+int help(const std::string& subcommand);
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: morf <base_model.obj> <target_model.obj>" << std::endl;
-        return 1;
-    }
+    if (argc < 2) return help("help");
 
-    std::string basePath = argv[1];
-    std::string targetPath = argv[2];
-    
-    if (!std::filesystem::exists(basePath)) {
-        std::cerr << "Error: File '" << basePath << "' does not exist." << std::endl;
-        return 1;
+    std::string subcommand = argv[1];
+    if (subcommand == "-h" || subcommand == "--help" || subcommand == "help") {
+        return help("help");
+    } else if (subcommand == "diff") {
+        if (argc == 4) {
+            try {
+                Morf::Diff::run(argv[2], argv[3]);
+                return 0;
+            } catch (const std::exception& e) {
+                std::cerr << "Error: " << e.what() << '\n';
+                return 1;
+            }
+        } else {
+            return help("diff");
+        }
+    } else if (subcommand == "merge") {
+        if (argc == 5) {
+            try {
+                Morf::Merge::run(argv[2], argv[3], argv[4]);
+                return 0;
+            } catch (const std::exception& e) {
+                std::cerr << "Error: " << e.what() << '\n';
+                return 1;
+            }
+        } else {
+            return help("merge");
+        }
+    } else {
+        return help(subcommand);
     }
-    if (!std::filesystem::exists(targetPath)) {
-        std::cerr << "Error: File '" << targetPath << "' does not exist." << std::endl;
-        return 1;
-    }
-
-    Morf::Model baseModel = Morf::Parser::parse(basePath);
-    Morf::Model targetModel = Morf::Parser::parse(targetPath);
-    Morf::Diff diff = Morf::DiffEngine::compare(baseModel, targetModel);
-
-    Morf::Application app(1600, 900);
-    app.isMergeMode = true;
-    app.run(baseModel, targetModel, diff);
 
     return 0;
+}
+
+int help(const std::string& subcommand) {
+    if (subcommand == "help") {
+        std::cout << "Usage: morf <command> [options]\n\n"
+                  << "Commands:\n"
+                  << "  help    Show this help message\n"
+                  << "  diff    Compare models and compute differences\n"
+                  << "  merge   Merge differences between models\n\n"
+                  << "Options:\n"
+                  << "  -h, --help    Show this help message\n";
+        return 0;
+    } else if (subcommand == "diff") {
+        std::cerr << "Usage: morf diff <baseFile> <targetFile>\n\n"
+                  << "Example:\n"
+                  << "  morf diff old.obj new.obj\n";
+        return 1;
+    } else if (subcommand == "merge") {
+        std::cerr << "Usage: morf merge <originalFile> <ourFile> <theirFile>\n\n"
+                  << "Example:\n"
+                  << "  morf merge base.obj ours.obj theirs.obj\n";
+        return 1;
+    } else {
+        std::cerr << "morf: '" << subcommand << "' is not a morf command. See 'morf --help'\n";
+        return 1;
+    }
 }
