@@ -16,7 +16,6 @@ Release/
 
 # Ignore any testing files
 *.obj
-*.png
 *.jpg
 *.mtl
 
