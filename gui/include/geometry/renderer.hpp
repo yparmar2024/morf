@@ -35,6 +35,5 @@ namespace Morf {
             void drawHighlight(const Session& session);
             void unloadModels();
             void initLighting();
-
     };
 } // namespace Morf

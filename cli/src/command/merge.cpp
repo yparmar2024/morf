@@ -1,4 +1,4 @@
-// morf - core/src/command/merge.cpp
+// morf - cli/src/command/merge.cpp
 #include "application/application.hpp"
 #include "application/session.hpp"
 #include "command/merge.hpp"
@@ -9,6 +9,7 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <stdexcept>
 #include <vector>
 
 namespace Morf {
@@ -65,4 +66,4 @@ namespace Morf {
 
         return 0;
     }
-}
+} // namespace Morf

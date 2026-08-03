@@ -1,6 +1,5 @@
 // morf - core/src/compare/engine.cpp
 #include "compare/engine.hpp"
-#include <algorithm>
 #include <cstddef>
 #include <vector>
 
