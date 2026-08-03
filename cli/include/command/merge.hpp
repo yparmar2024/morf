@@ -1,4 +1,4 @@
-/* morf - core/include/command/merge.hpp
+/* morf - cli/include/command/merge.hpp
  * Merge command specific logic
  */
 #pragma once
@@ -12,4 +12,4 @@ namespace Morf {
         public:
             static int run(const std::string& baseFilePath, const std::string& ourFilePath, const std::string& theirFilePath);
     };
-}
+} // namespace Morf

@@ -1,4 +1,4 @@
-/* morf - core/include/command/diff.hpp
+/* morf - cli/include/command/diff.hpp
  * Diff command specific logic
  */
 #pragma once
@@ -12,4 +12,4 @@ namespace Morf {
         public:
             static int run(const std::string& baseFilePath, const std::string& targetFilePath);
     };
-}
+} // namespace Morf

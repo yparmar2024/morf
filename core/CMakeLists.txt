@@ -1,10 +1,6 @@
 # Add libraries
 add_library(morfCore STATIC
-    src/command/diff.cpp
-    src/command/merge.cpp
-
     src/compare/engine.cpp
-
     src/formats/model.cpp
     src/formats/obj/handler.cpp
 )

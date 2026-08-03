@@ -1,4 +1,4 @@
-// morf - core/src/command/diff.cpp
+// morf - cli/src/command/diff.cpp
 #include "application/application.hpp"
 #include "application/session.hpp"
 #include "command/diff.hpp"

@@ -1,4 +1,4 @@
-// morf - core/src/command/merge.cpp
+// morf - cli/src/command/merge.cpp
 #include "application/application.hpp"
 #include "application/session.hpp"
 #include "command/merge.hpp"
@@ -65,4 +65,4 @@ namespace Morf {
 
         return 0;
     }
-}
+} // namespace Morf
