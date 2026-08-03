@@ -66,6 +66,16 @@ namespace Morf {
                     rlViewport(0, 0, GetScreenWidth() / 2, GetScreenHeight());
                     BeginMode3D(camera_);
 
+                        rlMatrixMode(RL_PROJECTION);
+                        rlLoadIdentity();
+
+                        double aspect = (double)(GetScreenWidth() / 2.0f) / (double)GetScreenHeight();
+                        double top = 0.01 * tan(camera_.fovy * 0.5 * DEG2RAD);
+                        double right = top * aspect;
+
+                        rlFrustum(-right, right, -top, top, 0.01, 1000.0);
+                        rlMatrixMode(RL_MODELVIEW);
+
                         renderer.drawLeftView();
                         renderer.drawHighlight(session);
 
@@ -73,6 +83,12 @@ namespace Morf {
 
                     rlViewport(GetScreenWidth() / 2, 0, GetScreenWidth() / 2, GetScreenHeight());
                     BeginMode3D(camera_);
+
+                        rlMatrixMode(RL_PROJECTION);
+                        rlLoadIdentity();
+
+                        rlFrustum(-right, right, -top, top, 0.01, 1000.0);
+                        rlMatrixMode(RL_MODELVIEW);
 
                         renderer.drawRightView();
                         renderer.drawHighlight(session);
