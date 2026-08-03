@@ -9,6 +9,7 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <stdexcept>
 #include <vector>
 
 namespace Morf {

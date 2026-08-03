@@ -1,5 +1,6 @@
 // morf - cli/main.cpp
 #include "command/diff.hpp"
+#include "command/init.hpp"
 #include "command/merge.hpp"
 #include <cstdio>
 #include <cstdlib>
@@ -18,6 +19,17 @@ int main(int argc, char* argv[]) {
     std::string subcommand = argv[1];
     if (subcommand == "-h" || subcommand == "--help" || subcommand == "help") {
         return help("help");
+    } else if (subcommand == "init") {
+        if (argc == 2) {
+            try {
+                Morf::Init::run();
+            } catch (const std::exception& e) {
+                std::cerr << "Error: "<< e.what() << '\n';
+                return 1;
+            }
+        } else {
+            return help("init");
+        }
     } else if (subcommand == "diff") {
         if (argc == 4) {
             try {
@@ -92,11 +104,17 @@ int help(const std::string& subcommand) {
         std::cout << "Usage: morf <command> [options]\n\n"
                   << "Commands:\n"
                   << "  help    Show this help message\n"
+                  << "  init    Initialize the current repository\n"
                   << "  diff    Compare models and compute differences\n"
                   << "  merge   Merge differences between models\n\n"
                   << "Options:\n"
                   << "  -h, --help    Show this help message\n";
         return 0;
+    } else if (subcommand == "init") {
+        std::cerr << "Usage: morf init\n\n"
+                  << "Example:\n"
+                  << "  morf init\n";
+        return 1;
     } else if (subcommand == "diff") {
         std::cerr << "Usage: morf diff <baseFile> <targetFile>\n\n"
                   << "Example:\n"

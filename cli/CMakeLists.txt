@@ -1,6 +1,7 @@
 # Create CLI executable
 add_executable(morf
     main.cpp
+    src/command/init.cpp
     src/command/diff.cpp
     src/command/merge.cpp
 )
