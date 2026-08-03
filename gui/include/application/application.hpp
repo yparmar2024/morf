@@ -5,9 +5,6 @@
 #include "raylib.h"
 #include "application/session.hpp"
 #include "geometry/renderer.hpp"
-#include <array>
-#include <cstddef>
-#include <vector>
 
 namespace Morf {
     class Application {
