@@ -1,11 +1,13 @@
 // morf - core/src/compare/engine.cpp
 #include "compare/engine.hpp"
+#include "performance/timing.hpp"
 
 #include <cstddef>
 #include <vector>
 
 namespace Morf {
     Delta Engine::computeDelta(const GenericModel& base, const GenericModel& target) {
+        ScopedPhase phase("Compare models");
         const auto isLess = [&](const std::vector<std::size_t>& baseFace,
                                 const std::vector<std::array<float, 3>>& baseVertices,
                                 const std::vector<std::size_t>& targetFace,

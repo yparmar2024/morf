@@ -6,6 +6,7 @@ file(GLOB_RECURSE MORF_CXX_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/core/*.hpp"
     "${PROJECT_SOURCE_DIR}/gui/*.cpp"
     "${PROJECT_SOURCE_DIR}/gui/*.hpp"
+    "${PROJECT_SOURCE_DIR}/support/*.hpp"
 )
 list(SORT MORF_CXX_FILES)
 

@@ -12,6 +12,11 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Shared, header-only diagnostics for core, CLI, and GUI.
+add_library(morfTiming INTERFACE)
+target_include_directories(morfTiming INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/support/include")
+target_compile_definitions(morfTiming INTERFACE MORF_BUILD_TYPE="$<CONFIG>")
+
 # Add dependent subdirectories
 add_subdirectory(gui)
 add_subdirectory(core)

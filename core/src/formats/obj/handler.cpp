@@ -2,6 +2,7 @@
 #include "formats/obj/handler.hpp"
 #include "io/mapped_file.hpp"
 #include "io/temporary.hpp"
+#include "performance/timing.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -17,6 +18,7 @@
 
 namespace Morf {
     Model Handler::parse(const std::string& filePath) {
+        ScopedPhase phase("Parse OBJ (includes mapped reads)");
         Model model;
         MappedFile file(filePath);
         std::string line;
@@ -170,6 +172,7 @@ namespace Morf {
     }
 
     GenericModel Handler::convert(const Model& model) {
+        ScopedPhase phase("Convert to generic model");
         GenericModel genericModel;
 
         for (const auto& v : model.getVertices()) genericModel.addVertex({v.x, v.y, v.z});
