@@ -1,5 +1,6 @@
 // morf - core/src/formats/obj/handler.cpp
 #include "formats/obj/handler.hpp"
+#include "io/mapped_file.hpp"
 #include "io/temporary.hpp"
 
 #include <cmath>
@@ -17,14 +18,13 @@
 namespace Morf {
     Model Handler::parse(const std::string& filePath) {
         Model model;
-        std::ifstream file(filePath);
-        if (!file.is_open()) throw std::runtime_error("Failed to open '" + filePath + "' for reading.");
+        MappedFile file(filePath);
         std::string line;
         std::size_t lineNumber = 0;
         std::unordered_map<std::string, int> unknownKeywords;
         std::unordered_map<std::string, int> invalidArgs;
 
-        while (std::getline(file, line)) {
+        while (file.readLine(line)) {
             ++lineNumber;
             // Inline comments must not be parsed as coordinates or face references.
             line.erase(line.find('#') == std::string::npos ? line.size() : line.find('#'));
@@ -153,8 +153,6 @@ namespace Morf {
                 unknownKeywords[keyword]++;
             }
         }
-
-        if (file.bad()) throw std::runtime_error("Failed while reading '" + filePath + "'.");
 
         if (!unknownKeywords.empty()) {
             std::cerr << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
