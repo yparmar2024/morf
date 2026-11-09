@@ -16,6 +16,8 @@ reviews:
     enabled: false
   request_changes_workflow: false
   high_level_summary: false
+  # Keep placeholder-triggered summaries out of PR descriptions too.
+  high_level_summary_in_walkthrough: true
   auto_title_placeholder: ""
   review_status: true
   collapse_walkthrough: true
