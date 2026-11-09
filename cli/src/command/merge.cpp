@@ -49,7 +49,8 @@ namespace Morf {
         };
 
         Session session(verticePtrs, indicePtrs, "merge");
-        app.run(session);
+        if (!app.run(session))
+            throw std::runtime_error("Merge canceled; no output was saved.");
 
         if (session.isResolved()) {
             auto [mergedVertices, mergedFaces] = session.getMergedGeometry();

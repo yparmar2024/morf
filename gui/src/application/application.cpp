@@ -6,6 +6,8 @@
 #include "raymath.h"
 #include "rcamera.h"
 #include "rlgl.h"
+#include <algorithm>
+#include <stdexcept>
 
 namespace Morf {
     Application::Application() {
@@ -24,20 +26,36 @@ namespace Morf {
         };
     }
     
-    void Application::run(Session& session) {
+    bool Application::run(Session& session) {
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(0, 0, "morf - Raylib Viewer");
+        if (!IsWindowReady()) throw std::runtime_error("Failed to initialize viewer window.");
         SetWindowMinSize(GetMonitorWidth(0) * 0.50f, GetMonitorHeight(0) * 0.50f);
         rlDisableBackfaceCulling();
         SetTargetFPS(60);
 
         Renderer renderer;
+        struct ViewerCleanup {
+            Renderer& renderer;
+            ~ViewerCleanup() {
+                renderer.unloadModels();
+                CloseWindow();
+            }
+        } cleanup{renderer};
         renderer.createModels(session);
 
         focusOnFace(session);
 
-        while (!WindowShouldClose()) {
-            updateCamera();
+        bool exitRequested = false;
+        bool confirmExit = false;
+        bool saveRequested = false;
+        while (!exitRequested) {
+            if (WindowShouldClose()) {
+                if (session.getMode() == "diff") break;
+                confirmExit = true;
+            }
+            if (!confirmExit) updateCamera();
+            else GuiLock();
 
             BeginDrawing();
 
@@ -60,7 +78,8 @@ namespace Morf {
                     const char* btnText = (session.getMode() == "diff") ? "Exit" : "Save & Exit";
 
                     if (GuiButton({ panelX + 10.0f, panelY + 30.0f, btnWidth, btnHeight}, btnText)) {
-                        break;
+                        saveRequested = session.getMode() == "merge";
+                        exitRequested = true;
                     }
                 } else {
                     rlViewport(0, 0, GetScreenWidth() / 2, GetScreenHeight());
@@ -106,11 +125,29 @@ namespace Morf {
             DrawText("Left-drag to move\n\nRight-drag to orbit\n\nScroll to zoom", 10, 10, 20, BLACK);
             DrawFPS(10, 100);
 
+            if (confirmExit) {
+                GuiUnlock();
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.35f));
+                const bool resolved = session.isResolved();
+                const float width = std::min(480.0f, static_cast<float>(GetScreenWidth()));
+                const Rectangle bounds{(GetScreenWidth() - width) / 2.0f,
+                                       (GetScreenHeight() - 170.0f) / 2.0f, width, 170.0f};
+                const int choice = GuiMessageBox(bounds, "Leave merge?",
+                    resolved ? "Save the merged model before leaving?" : "Unresolved conflicts remain. Discard this merge?",
+                    resolved ? "Save;Discard;Keep Editing" : "Discard;Keep Editing");
+                if (resolved && choice == 1) {
+                    saveRequested = true;
+                    exitRequested = true;
+                } else if (choice == (resolved ? 2 : 1)) {
+                    exitRequested = true;
+                } else if (choice >= 0) {
+                    confirmExit = false;
+                }
+            }
             EndDrawing();
         }
         rlEnableBackfaceCulling();
-        renderer.unloadModels();
-        CloseWindow();
+        return saveRequested;
     }
 
     void Application::updateCamera() {
