@@ -8,8 +8,8 @@
 
 namespace Morf {
     struct AABB {
-        float minX, minY, minZ;
-        float maxX, maxY, maxZ;
+            float minX, minY, minZ;
+            float maxX, maxY, maxZ;
     };
 
     AABB getFaceBox(const std::vector<std::size_t>& face, const std::vector<std::array<float, 3>>& vertices);

@@ -2,18 +2,18 @@
  * Application logic to work with external library Raylib
  */
 #pragma once
-#include "raylib.h"
 #include "application/session.hpp"
 #include "geometry/renderer.hpp"
+#include "raylib.h"
 
 namespace Morf {
     class Application {
         private:
             Camera3D camera_;
 
-            const float rotSens   = 0.003f;
+            const float rotSens = 0.003f;
             const float zoomSpeed = 0.5f;
-            const float panSens   = 0.003f;
+            const float panSens = 0.003f;
 
             void updateCamera();
             void focusOnFace(const Session& session);

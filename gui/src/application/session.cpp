@@ -1,6 +1,7 @@
 // morf - gui/src/application/application.cpp
 #include "application/session.hpp"
 #include "geometry/bounds.hpp"
+
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -13,17 +14,12 @@ namespace Morf {
             if (!vertices) throw std::invalid_argument("Session requires non-null vertex arrays.");
             return *vertices;
         }
-    }
-    Session::Session(
-        const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
-        const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
-        const std::string& mode
-    ) :
-        baseVertices_(requireVertices(verticePtrs[0])),
-        leftVertices_(requireVertices(verticePtrs[1])),
-        rightVertices_(requireVertices(verticePtrs[2])),
-        mode_(mode)
-    {
+    } // namespace
+    Session::Session(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
+                     const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
+                     const std::string& mode)
+        : baseVertices_(requireVertices(verticePtrs[0])), leftVertices_(requireVertices(verticePtrs[1])),
+          rightVertices_(requireVertices(verticePtrs[2])), mode_(mode) {
         if (mode_ != "diff" && mode_ != "merge") throw std::invalid_argument("Invalid session mode.");
         for (std::size_t i = mode_ == "diff" ? 3 : 0; i < indicePtrs.size(); ++i) {
             if (!indicePtrs[i]) throw std::invalid_argument("Session requires non-null face arrays.");
@@ -35,17 +31,16 @@ namespace Morf {
             }
         }
         if (mode_ == "diff") {
-            inactiveBaseIndices_  = *(indicePtrs[3]);
-            inactiveLeftIndices_  = {};
+            inactiveBaseIndices_ = *(indicePtrs[3]);
+            inactiveLeftIndices_ = {};
             inactiveRightIndices_ = {};
 
-            activeLeftAdds_       = {};
-            activeLeftRemoves_    = {};
-            activeRightAdds_      = *(indicePtrs[4]);
-            activeRightRemoves_   = *(indicePtrs[5]);
+            activeLeftAdds_ = {};
+            activeLeftRemoves_ = {};
+            activeRightAdds_ = *(indicePtrs[4]);
+            activeRightRemoves_ = *(indicePtrs[5]);
         } else if (mode_ == "merge") {
-            auto isLess = [&](const std::vector<std::size_t>& a, const std::vector<std::size_t>& b) -> bool
-            {
+            auto isLess = [&](const std::vector<std::size_t>& a, const std::vector<std::size_t>& b) -> bool {
                 if (a.size() != b.size()) return a.size() < b.size();
 
                 for (std::size_t i = 0; i < a.size(); ++i) {
@@ -55,28 +50,25 @@ namespace Morf {
                 return false;
             };
 
-            std::set_intersection(
-                (*indicePtrs[0]).begin(), (*indicePtrs[0]).end(),
-                (*indicePtrs[3]).begin(), (*indicePtrs[3]).end(),
-                std::back_inserter(inactiveBaseIndices_),
-                isLess
-            );
-            inactiveLeftIndices_  = {};
+            std::set_intersection((*indicePtrs[0]).begin(), (*indicePtrs[0]).end(), (*indicePtrs[3]).begin(),
+                                  (*indicePtrs[3]).end(), std::back_inserter(inactiveBaseIndices_), isLess);
+            inactiveLeftIndices_ = {};
             inactiveRightIndices_ = {};
 
-            activeLeftAdds_       = *(indicePtrs[1]);
-            activeLeftRemoves_    = *(indicePtrs[2]);
-            activeRightAdds_      = *(indicePtrs[4]);
-            activeRightRemoves_   = *(indicePtrs[5]);
+            activeLeftAdds_ = *(indicePtrs[1]);
+            activeLeftRemoves_ = *(indicePtrs[2]);
+            activeRightAdds_ = *(indicePtrs[4]);
+            activeRightRemoves_ = *(indicePtrs[5]);
 
             autoMerge();
         }
     }
 
     void Session::autoMerge() {
-        const auto isLess = [&](const std::vector<std::size_t>& baseFace, const std::vector<std::array<float, 3>>& baseVertices,
-                                const std::vector<std::size_t>& targetFace, const std::vector<std::array<float, 3>>& targetVertices) -> bool
-        {
+        const auto isLess = [&](const std::vector<std::size_t>& baseFace,
+                                const std::vector<std::array<float, 3>>& baseVertices,
+                                const std::vector<std::size_t>& targetFace,
+                                const std::vector<std::array<float, 3>>& targetVertices) -> bool {
             if (baseFace.size() != targetFace.size()) return baseFace.size() < targetFace.size();
 
             for (std::size_t i = 0; i < baseFace.size(); ++i) {
@@ -175,12 +167,16 @@ namespace Morf {
         activeRightRemoves_.clear();
 
         for (std::size_t i = 0; i < remainingLeftAdds.size(); ++i) {
-            if (leftAddCollides[i]) activeLeftAdds_.push_back(remainingLeftAdds[i]);
-            else inactiveLeftIndices_.push_back(remainingLeftAdds[i]);
+            if (leftAddCollides[i])
+                activeLeftAdds_.push_back(remainingLeftAdds[i]);
+            else
+                inactiveLeftIndices_.push_back(remainingLeftAdds[i]);
         }
         for (std::size_t i = 0; i < remainingRightAdds.size(); ++i) {
-            if (rightAddCollides[i]) activeRightAdds_.push_back(remainingRightAdds[i]);
-            else inactiveRightIndices_.push_back(remainingRightAdds[i]);
+            if (rightAddCollides[i])
+                activeRightAdds_.push_back(remainingRightAdds[i]);
+            else
+                inactiveRightIndices_.push_back(remainingRightAdds[i]);
         }
         for (std::size_t i = 0; i < remainingLeftRemoves.size(); ++i) {
             if (leftRemoveCollides[i]) activeLeftRemoves_.push_back(remainingLeftRemoves[i]);
@@ -191,8 +187,8 @@ namespace Morf {
     }
 
     int Session::getTotalConflicts() const {
-        return activeLeftAdds_.size() + activeLeftRemoves_.size() +
-               activeRightAdds_.size() + activeRightRemoves_.size();
+        return activeLeftAdds_.size() + activeLeftRemoves_.size() + activeRightAdds_.size() +
+               activeRightRemoves_.size();
     };
 
     void Session::nextConflict() {
@@ -243,13 +239,15 @@ namespace Morf {
         if (getTotalConflicts() > 0 && selected_ >= getTotalConflicts()) selected_ = getTotalConflicts() - 1;
     }
 
-    const std::pair<std::vector<std::array<float, 3>>, std::vector<std::vector<std::size_t>>> Session::getMergedGeometry() const {
+    const std::pair<std::vector<std::array<float, 3>>, std::vector<std::vector<std::size_t>>>
+    Session::getMergedGeometry() const {
         std::vector<std::array<float, 3>> mergedVertices;
         std::vector<std::vector<std::size_t>> mergedIndices;
         std::map<std::array<float, 3>, std::size_t> vertexMap;
         std::set<std::vector<std::size_t>> uniqueFaces;
 
-        auto addFace = [&](const std::vector<std::size_t>& faceIndices, const std::vector<std::array<float, 3>>& sourceVertices) {
+        auto addFace = [&](const std::vector<std::size_t>& faceIndices,
+                           const std::vector<std::array<float, 3>>& sourceVertices) {
             std::vector<std::size_t> newFaceIndices;
             for (std::size_t vIdx : faceIndices) {
                 const auto& pt = sourceVertices[vIdx];
@@ -266,10 +264,10 @@ namespace Morf {
             }
         };
 
-        for (const auto& f : inactiveBaseIndices_)  addFace(f, baseVertices_);
-        for (const auto& f : inactiveLeftIndices_)  addFace(f, leftVertices_);
+        for (const auto& f : inactiveBaseIndices_) addFace(f, baseVertices_);
+        for (const auto& f : inactiveLeftIndices_) addFace(f, leftVertices_);
         for (const auto& f : inactiveRightIndices_) addFace(f, rightVertices_);
 
-        return { mergedVertices, mergedIndices }; 
+        return {mergedVertices, mergedIndices};
     }
 } // namespace Morf
