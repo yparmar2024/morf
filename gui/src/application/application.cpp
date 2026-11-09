@@ -1,31 +1,29 @@
 // morf - gui/src/application/application.cpp
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
 #include "application/application.hpp"
 #include "application/session.hpp"
+#include "raygui.h"
 #include "raymath.h"
 #include "rcamera.h"
 #include "rlgl.h"
+
 #include <algorithm>
 #include <stdexcept>
 
 namespace Morf {
     Application::Application() {
-        camera_.target     = { 0.5f, 0.5f, 0.5f };
-        camera_.up         = { 0.0f, 1.0f, 0.0f };
-        camera_.fovy       = 45.0f;
+        camera_.target = {0.5f, 0.5f, 0.5f};
+        camera_.up = {0.0f, 1.0f, 0.0f};
+        camera_.fovy = 45.0f;
         camera_.projection = CAMERA_PERSPECTIVE;
 
-        float dist  = 5.0f;
-        float yaw   = 0.0f;
+        float dist = 5.0f;
+        float yaw = 0.0f;
         float pitch = 0.5f;
-        camera_.position = {
-            camera_.target.x + dist * cosf(pitch) * cosf(yaw),
-            camera_.target.y + dist * sinf(pitch),
-            camera_.target.z + dist * cosf(pitch) * sinf(yaw)
-        };
+        camera_.position = {camera_.target.x + dist * cosf(pitch) * cosf(yaw), camera_.target.y + dist * sinf(pitch),
+                            camera_.target.z + dist * cosf(pitch) * sinf(yaw)};
     }
-    
+
     bool Application::run(Session& session) {
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(0, 0, "morf - Raylib Viewer");
@@ -36,11 +34,11 @@ namespace Morf {
 
         Renderer renderer;
         struct ViewerCleanup {
-            Renderer& renderer;
-            ~ViewerCleanup() {
-                renderer.unloadModels();
-                CloseWindow();
-            }
+                Renderer& renderer;
+                ~ViewerCleanup() {
+                    renderer.unloadModels();
+                    CloseWindow();
+                }
         } cleanup{renderer};
         renderer.createModels(session);
 
@@ -54,73 +52,77 @@ namespace Morf {
                 if (session.getMode() == "diff") break;
                 confirmExit = true;
             }
-            if (!confirmExit) updateCamera();
-            else GuiLock();
+            if (!confirmExit)
+                updateCamera();
+            else
+                GuiLock();
 
             BeginDrawing();
 
-                ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-                if (session.isResolved()) {
-                    BeginMode3D(camera_);
+            if (session.isResolved()) {
+                BeginMode3D(camera_);
 
-                        renderer.drawFullView();
-                        
-                    EndMode3D();
+                renderer.drawFullView();
 
-                    const float btnWidth = 200.0f;
-                    const float btnHeight = 40.0f;
-                    const float panelW = btnWidth + 20.0f;
-                    const float panelH = btnHeight + 40.0f;
+                EndMode3D();
 
-                    float panelX = (GetScreenWidth() - panelW) / 2.0f;
-                    float panelY = GetScreenHeight() - panelH - 30.0f;
-                    const char* btnText = (session.getMode() == "diff") ? "Exit" : "Save & Exit";
+                const float btnWidth = 200.0f;
+                const float btnHeight = 40.0f;
+                const float panelW = btnWidth + 20.0f;
+                const float panelH = btnHeight + 40.0f;
 
-                    if (GuiButton({ panelX + 10.0f, panelY + 30.0f, btnWidth, btnHeight}, btnText)) {
-                        saveRequested = session.getMode() == "merge";
-                        exitRequested = true;
-                    }
-                } else {
-                    rlViewport(0, 0, GetScreenWidth() / 2, GetScreenHeight());
-                    BeginMode3D(camera_);
+                float panelX = (GetScreenWidth() - panelW) / 2.0f;
+                float panelY = GetScreenHeight() - panelH - 30.0f;
+                const char* btnText = (session.getMode() == "diff") ? "Exit" : "Save & Exit";
 
-                        rlMatrixMode(RL_PROJECTION);
-                        rlLoadIdentity();
-
-                        double aspect = (double)(GetScreenWidth() / 2.0f) / (double)GetScreenHeight();
-                        double top = 0.01 * tan(camera_.fovy * 0.5 * DEG2RAD);
-                        double right = top * aspect;
-
-                        rlFrustum(-right, right, -top, top, 0.01, 1000.0);
-                        rlMatrixMode(RL_MODELVIEW);
-
-                        renderer.drawLeftView();
-                        renderer.drawHighlight(session);
-
-                    EndMode3D();
-
-                    rlViewport(GetScreenWidth() / 2, 0, GetScreenWidth() / 2, GetScreenHeight());
-                    BeginMode3D(camera_);
-
-                        rlMatrixMode(RL_PROJECTION);
-                        rlLoadIdentity();
-
-                        rlFrustum(-right, right, -top, top, 0.01, 1000.0);
-                        rlMatrixMode(RL_MODELVIEW);
-
-                        renderer.drawRightView();
-                        renderer.drawHighlight(session);
-                        
-                    EndMode3D();
-
-                    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
-
-                    DrawText("Our Changes", (GetScreenWidth() / 4) - (MeasureText("Our Changes", 30) / 2), GetScreenHeight() - 50, 30, BLACK);
-                    DrawText("Their Changes", (3 * GetScreenWidth() / 4) - (MeasureText("Their Changes", 30) / 2), GetScreenHeight() - 50, 30, BLACK);
-                    DrawRectangle(GetScreenWidth() / 2 - 2, 0, 4, GetScreenHeight(), BLACK);
-                    buildMergePanel(session, renderer);
+                if (GuiButton({panelX + 10.0f, panelY + 30.0f, btnWidth, btnHeight}, btnText)) {
+                    saveRequested = session.getMode() == "merge";
+                    exitRequested = true;
                 }
+            } else {
+                rlViewport(0, 0, GetScreenWidth() / 2, GetScreenHeight());
+                BeginMode3D(camera_);
+
+                rlMatrixMode(RL_PROJECTION);
+                rlLoadIdentity();
+
+                double aspect = (double)(GetScreenWidth() / 2.0f) / (double)GetScreenHeight();
+                double top = 0.01 * tan(camera_.fovy * 0.5 * DEG2RAD);
+                double right = top * aspect;
+
+                rlFrustum(-right, right, -top, top, 0.01, 1000.0);
+                rlMatrixMode(RL_MODELVIEW);
+
+                renderer.drawLeftView();
+                renderer.drawHighlight(session);
+
+                EndMode3D();
+
+                rlViewport(GetScreenWidth() / 2, 0, GetScreenWidth() / 2, GetScreenHeight());
+                BeginMode3D(camera_);
+
+                rlMatrixMode(RL_PROJECTION);
+                rlLoadIdentity();
+
+                rlFrustum(-right, right, -top, top, 0.01, 1000.0);
+                rlMatrixMode(RL_MODELVIEW);
+
+                renderer.drawRightView();
+                renderer.drawHighlight(session);
+
+                EndMode3D();
+
+                rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+
+                DrawText("Our Changes", (GetScreenWidth() / 4) - (MeasureText("Our Changes", 30) / 2),
+                         GetScreenHeight() - 50, 30, BLACK);
+                DrawText("Their Changes", (3 * GetScreenWidth() / 4) - (MeasureText("Their Changes", 30) / 2),
+                         GetScreenHeight() - 50, 30, BLACK);
+                DrawRectangle(GetScreenWidth() / 2 - 2, 0, 4, GetScreenHeight(), BLACK);
+                buildMergePanel(session, renderer);
+            }
 
             DrawText("Left-drag to move\n\nRight-drag to orbit\n\nScroll to zoom", 10, 10, 20, BLACK);
             DrawFPS(10, 100);
@@ -130,11 +132,12 @@ namespace Morf {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.35f));
                 const bool resolved = session.isResolved();
                 const float width = std::min(480.0f, static_cast<float>(GetScreenWidth()));
-                const Rectangle bounds{(GetScreenWidth() - width) / 2.0f,
-                                       (GetScreenHeight() - 170.0f) / 2.0f, width, 170.0f};
+                const Rectangle bounds{(GetScreenWidth() - width) / 2.0f, (GetScreenHeight() - 170.0f) / 2.0f, width,
+                                       170.0f};
                 const int choice = GuiMessageBox(bounds, "Leave merge?",
-                    resolved ? "Save the merged model before leaving?" : "Unresolved conflicts remain. Discard this merge?",
-                    resolved ? "Save;Discard;Keep Editing" : "Discard;Keep Editing");
+                                                 resolved ? "Save the merged model before leaving?"
+                                                          : "Unresolved conflicts remain. Discard this merge?",
+                                                 resolved ? "Save;Discard;Keep Editing" : "Discard;Keep Editing");
                 if (resolved && choice == 1) {
                     saveRequested = true;
                     exitRequested = true;
@@ -152,7 +155,7 @@ namespace Morf {
 
     void Application::updateCamera() {
         Vector2 delta = GetMouseDelta();
-        float wheel   = GetMouseWheelMove();
+        float wheel = GetMouseWheelMove();
 
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             float dist = Vector3Distance(camera_.position, camera_.target);
@@ -173,7 +176,7 @@ namespace Morf {
             }
         }
     }
-    
+
     void Application::focusOnFace(const Session& session) {
         if (session.getTotalConflicts() == 0) return;
 
@@ -182,21 +185,21 @@ namespace Morf {
         const std::vector<std::array<float, 3>>* vertices = nullptr;
 
         if (idx < session.getOurAddedIndices().size()) {
-            face     = &session.getOurAddedIndices()[idx];
+            face = &session.getOurAddedIndices()[idx];
             vertices = &session.getOurVertices();
         } else if ((idx -= session.getOurAddedIndices().size()) < session.getOurRemovedIndices().size()) {
-            face     = &session.getOurRemovedIndices()[idx];
+            face = &session.getOurRemovedIndices()[idx];
             vertices = &session.getBaseVertices();
         } else if ((idx -= session.getOurRemovedIndices().size()) < session.getTheirAddedIndices().size()) {
-            face     = &session.getTheirAddedIndices()[idx];
+            face = &session.getTheirAddedIndices()[idx];
             vertices = &session.getTheirVertices();
         } else {
-            idx     -= session.getTheirAddedIndices().size();
-            face     = &session.getTheirRemovedIndices()[idx];
+            idx -= session.getTheirAddedIndices().size();
+            face = &session.getTheirRemovedIndices()[idx];
             vertices = &session.getBaseVertices();
         }
 
-        Vector3 center = { 0, 0, 0 };
+        Vector3 center = {0, 0, 0};
         for (std::size_t vIdx : *face) {
             center.x += (*vertices)[vIdx][0];
             center.y += (*vertices)[vIdx][1];
@@ -207,7 +210,7 @@ namespace Morf {
         center.y *= invN;
         center.z *= invN;
 
-        Vector3 normal = { 0, 0, 0 };
+        Vector3 normal = {0, 0, 0};
         const auto& v0 = (*vertices)[(*face)[0]];
         for (std::size_t k = 1; k < face->size() - 1; ++k) {
             const auto& v1 = (*vertices)[(*face)[k]];
@@ -227,35 +230,28 @@ namespace Morf {
             normal.y /= len;
             normal.z /= len;
         } else {
-            normal = { 0, 1, 0 };
+            normal = {0, 1, 0};
         }
 
         normal.z = -normal.z;
         float pitch = asinf(normal.y);
-        float yaw   = atan2(normal.z, normal.x);
+        float yaw = atan2(normal.z, normal.x);
 
-        if (pitch > 1.5f)  pitch = 1.5f;
+        if (pitch > 1.5f) pitch = 1.5f;
         if (pitch < -1.5f) pitch = -1.5f;
 
-        Vector3 safeNormal = {
-            cosf(pitch) * cosf(yaw),
-            sinf(pitch),
-            cosf(pitch) * sinf(yaw)
-        };
+        Vector3 safeNormal = {cosf(pitch) * cosf(yaw), sinf(pitch), cosf(pitch) * sinf(yaw)};
 
         float dist = Vector3Distance(camera_.position, camera_.target);
         if (dist < 0.5f) dist = 5.0f;
 
-        camera_.position = {
-            center.x + safeNormal.x * dist,
-            center.y + safeNormal.y * dist,
-            center.z + safeNormal.z * dist
-        };
+        camera_.position = {center.x + safeNormal.x * dist, center.y + safeNormal.y * dist,
+                            center.z + safeNormal.z * dist};
         camera_.target = center;
     }
 
     void Application::buildMergePanel(Session& session, Renderer& renderer) {
-        const float width  = GetScreenWidth();
+        const float width = GetScreenWidth();
         const float height = GetScreenHeight();
 
         int responsiveFontSize = std::max(10, (int)(height * 0.01f));
@@ -269,9 +265,8 @@ namespace Morf {
         const float padX = (0.05f) * panelW;
         const float padY = std::max(15.0f, 0.02f * height);
 
-        const float panelH = session.isResolved()
-            ? (30.0f + labelH + padY)
-            : (30.0f + labelH * 2 + spacing * 3 + buttonH * 2 + padY);
+        const float panelH =
+            session.isResolved() ? (30.0f + labelH + padY) : (30.0f + labelH * 2 + spacing * 3 + buttonH * 2 + padY);
 
         const float marginR = (0.01f) * width;
         const float marginT = (0.01f) * height;
@@ -279,7 +274,7 @@ namespace Morf {
         float panelX = width - panelW - marginR;
         float panelY = marginT;
 
-        Rectangle panel = { panelX, panelY, panelW, panelH };
+        Rectangle panel = {panelX, panelY, panelW, panelH};
         GuiWindowBox(panel, "Merge");
 
         const float innerX = panelX + padX;
@@ -287,31 +282,30 @@ namespace Morf {
         float currY = panelY + 2.0f * padY;
 
         if (session.isResolved()) {
-            GuiLabel({ innerX, currY, innerW, labelH }, "All conflicts resolved.");
+            GuiLabel({innerX, currY, innerW, labelH}, "All conflicts resolved.");
             return;
         }
 
-        GuiLabel({ innerX, currY, innerW, labelH },
-            TextFormat("Conflict %d / %d", session.getSelectedIndex() + 1, session.getTotalConflicts())
-        );
+        GuiLabel({innerX, currY, innerW, labelH},
+                 TextFormat("Conflict %d / %d", session.getSelectedIndex() + 1, session.getTotalConflicts()));
         currY += labelH + spacing;
 
         const float halfW = (innerW - spacing) / 2.0f;
-        if (GuiButton({ innerX, currY, halfW, buttonH }, "Accept Ours")) {
+        if (GuiButton({innerX, currY, halfW, buttonH}, "Accept Ours")) {
             session.acceptOurs();
             renderer.createModels(session);
         }
-        if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Accept Theirs")) {
+        if (GuiButton({innerX + halfW + spacing, currY, halfW, buttonH}, "Accept Theirs")) {
             session.acceptTheirs();
             renderer.createModels(session);
         }
         currY += buttonH + spacing;
 
-        if (GuiButton({ innerX, currY, halfW, buttonH }, "Previous")) {
+        if (GuiButton({innerX, currY, halfW, buttonH}, "Previous")) {
             session.prevConflict();
             focusOnFace(session);
         }
-        if (GuiButton({ innerX + halfW + spacing, currY, halfW, buttonH }, "Next")) {
+        if (GuiButton({innerX + halfW + spacing, currY, halfW, buttonH}, "Next")) {
             session.nextConflict();
             focusOnFace(session);
         }

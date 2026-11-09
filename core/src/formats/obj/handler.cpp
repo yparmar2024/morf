@@ -1,15 +1,16 @@
 // morf - core/src/formats/obj/handler.cpp
 #include "formats/obj/handler.hpp"
 #include "io/temporary.hpp"
+
 #include <cmath>
-#include <filesystem>
-#include <iomanip>
-#include <limits>
-#include <stdexcept>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -29,7 +30,8 @@ namespace Morf {
             line.erase(line.find('#') == std::string::npos ? line.size() : line.find('#'));
             std::stringstream ss(line);
             const auto invalidRecord = [&]() {
-                return std::runtime_error("Invalid OBJ record in '" + filePath + "' at line " + std::to_string(lineNumber) + ".");
+                return std::runtime_error("Invalid OBJ record in '" + filePath + "' at line " +
+                                          std::to_string(lineNumber) + ".");
             };
             std::string keyword;
             ss >> keyword;
@@ -68,34 +70,53 @@ namespace Morf {
                     int slot = 0;
 
                     while (std::getline(ts, part, '/')) {
-                        if (slot >= 3 || (slot == 0 && part.empty())) { validFace = false; break; }
+                        if (slot >= 3 || (slot == 0 && part.empty())) {
+                            validFace = false;
+                            break;
+                        }
                         if (!part.empty()) {
                             int raw;
                             try {
                                 std::size_t consumed = 0;
                                 raw = std::stoi(part, &consumed);
-                                if (consumed != part.size() || raw == 0) { validFace = false; break; }
-                            } catch (const std::invalid_argument&) { validFace = false; break; }
-                              catch (const std::out_of_range&) { validFace = false; break; }
+                                if (consumed != part.size() || raw == 0) {
+                                    validFace = false;
+                                    break;
+                                }
+                            } catch (const std::invalid_argument&) {
+                                validFace = false;
+                                break;
+                            } catch (const std::out_of_range&) {
+                                validFace = false;
+                                break;
+                            }
 
-                            const std::size_t count = slot == 0 ? model.getVertices().size() :
-                                                      slot == 1 ? model.getTextureVertices().size() :
-                                                                  model.getNormalVertices().size();
+                            const std::size_t count = slot == 0   ? model.getVertices().size()
+                                                      : slot == 1 ? model.getTextureVertices().size()
+                                                                  : model.getNormalVertices().size();
                             // VertexData stores int indices; reject unrepresentable input.
                             if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()))
                                 throw invalidRecord();
-                            const auto idx = raw > 0 ? static_cast<long long>(raw) - 1 :
-                                                      static_cast<long long>(count) + raw;
-                            if (idx < 0 || idx >= static_cast<long long>(count)) { validFace = false; break; }
-                            if (slot == 0)      vData.vIdx = static_cast<int>(idx);
-                            else if (slot == 1) vData.vtIdx = static_cast<int>(idx);
-                            else               vData.vnIdx = static_cast<int>(idx);
+                            const auto idx =
+                                raw > 0 ? static_cast<long long>(raw) - 1 : static_cast<long long>(count) + raw;
+                            if (idx < 0 || idx >= static_cast<long long>(count)) {
+                                validFace = false;
+                                break;
+                            }
+                            if (slot == 0)
+                                vData.vIdx = static_cast<int>(idx);
+                            else if (slot == 1)
+                                vData.vtIdx = static_cast<int>(idx);
+                            else
+                                vData.vnIdx = static_cast<int>(idx);
                         }
                         ++slot;
                     }
                     if (vData.vIdx < 0 || token.back() == '/') validFace = false;
-                    if (validFace) face.vertexData.push_back(vData);
-                    else           break;
+                    if (validFace)
+                        face.vertexData.push_back(vData);
+                    else
+                        break;
                 }
                 if (!validFace) {
                     invalidArgs["invalid vertex indices"]++;
@@ -132,16 +153,20 @@ namespace Morf {
                 unknownKeywords[keyword]++;
             }
         }
-        
+
         if (file.bad()) throw std::runtime_error("Failed while reading '" + filePath + "'.");
 
         if (!unknownKeywords.empty()) {
             std::cerr << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
-            for (const auto& [keyword, count] : unknownKeywords) { std::cerr << "WARNING:     > " << keyword << " (" << count << " occurences)\n"; }
+            for (const auto& [keyword, count] : unknownKeywords) {
+                std::cerr << "WARNING:     > " << keyword << " (" << count << " occurences)\n";
+            }
         }
         if (!invalidArgs.empty()) {
             std::cerr << "WARNING: Invalid OBJ args found for " << filePath << ":\n";
-            for (const auto& [arg, count] : invalidArgs) { std::cerr << "WARNING:     > " << arg << " (" << count << " occurences)\n"; }
+            for (const auto& [arg, count] : invalidArgs) {
+                std::cerr << "WARNING:     > " << arg << " (" << count << " occurences)\n";
+            }
         }
         return model;
     }
@@ -163,7 +188,8 @@ namespace Morf {
     }
 
     void Handler::write(const std::string& filePath, const GenericModel& model) {
-        const std::filesystem::path destination = std::filesystem::weakly_canonical(std::filesystem::absolute(filePath));
+        const std::filesystem::path destination =
+            std::filesystem::weakly_canonical(std::filesystem::absolute(filePath));
         TemporaryFile temporary(destination.parent_path());
         std::ofstream file(temporary.path());
         if (!file.is_open()) throw std::runtime_error("Failed to open temporary output for '" + filePath + "'.");

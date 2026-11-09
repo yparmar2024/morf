@@ -4,20 +4,22 @@
 #include "command/merge.hpp"
 #include "io/process.hpp"
 #include "io/temporary.hpp"
-#include <filesystem>
-#include <memory>
-#include <stdexcept>
+
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 class ResolvedInputs {
-    std::vector<std::unique_ptr<Morf::TemporaryFile>> temporaryFiles_;
-public:
-    std::vector<std::string> resolve(const std::vector<std::string>& paths);
+        std::vector<std::unique_ptr<Morf::TemporaryFile>> temporaryFiles_;
+
+    public:
+        std::vector<std::string> resolve(const std::vector<std::string>& paths);
 };
 int help(const std::string& subcommand);
 
@@ -35,7 +37,7 @@ int main(int argc, char* argv[]) {
             try {
                 result = Morf::Init::run();
             } catch (const std::exception& e) {
-                std::cerr << "Error: "<< e.what() << '\n';
+                std::cerr << "Error: " << e.what() << '\n';
                 return 1;
             }
         } else {
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
     } else if (subcommand == "diff") {
         if (argc == 4) {
             try {
-                resolvedPaths = inputs.resolve({ argv[2], argv[3] });
+                resolvedPaths = inputs.resolve({argv[2], argv[3]});
                 result = Morf::Diff::run(resolvedPaths[0], resolvedPaths[1]);
             } catch (const std::exception& e) {
                 std::cerr << "Error: " << e.what() << '\n';
@@ -56,7 +58,7 @@ int main(int argc, char* argv[]) {
     } else if (subcommand == "merge") {
         if (argc == 5) {
             try {
-                resolvedPaths = inputs.resolve({ argv[2], argv[3], argv[4] });
+                resolvedPaths = inputs.resolve({argv[2], argv[3], argv[4]});
                 result = Morf::Merge::run(resolvedPaths[0], resolvedPaths[1], resolvedPaths[2], argv[3]);
             } catch (const std::exception& e) {
                 std::cerr << "Error: " << e.what() << '\n';

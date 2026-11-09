@@ -7,28 +7,28 @@
 
 namespace Morf {
     struct Vertex {
-        float x, y, z;
+            float x, y, z;
     };
 
     struct VertexTexture {
-        float u, v, w = 0.0f;
+            float u = 0.0f, v = 0.0f, w = 0.0f;
     };
-    
+
     struct VertexNormal {
-        float x, y, z;
+            float x, y, z;
     };
 
     struct VertexData {
-        int vIdx = -1, vtIdx = -1, vnIdx = -1;
+            int vIdx = -1, vtIdx = -1, vnIdx = -1;
     };
 
     struct Face {
-        std::vector<VertexData> vertexData;
+            std::vector<VertexData> vertexData;
     };
 
     struct Object {
-        std::string name;
-        std::vector<Face> faces;
+            std::string name;
+            std::vector<Face> faces;
     };
 
     class Model {
@@ -45,9 +45,11 @@ namespace Morf {
             const std::vector<Object>& getObjects() const { return objects; }
 
             void addVertex(const Vertex& v) { vertices.push_back(v); }
-            void addTextureVertex (const VertexTexture& vt) { textureVertices.push_back(vt); }
-            void addNormalVertex (const VertexNormal& vn) { normalVertices.push_back(vn); }
-            void addFace(const Face& f) { objects.empty() ? objects.push_back({"default", {f}}) : objects.back().faces.push_back(f); }
+            void addTextureVertex(const VertexTexture& vt) { textureVertices.push_back(vt); }
+            void addNormalVertex(const VertexNormal& vn) { normalVertices.push_back(vn); }
+            void addFace(const Face& f) {
+                objects.empty() ? objects.push_back({"default", {f}}) : objects.back().faces.push_back(f);
+            }
             void addObject(const Object& o) { objects.push_back(o); }
     };
 } // namespace Morf

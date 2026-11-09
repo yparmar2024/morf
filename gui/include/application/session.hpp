@@ -2,11 +2,11 @@
  * Session logic to store current model states
  */
 #pragma once
-#include <string>
 #include <array>
 #include <cstddef>
-#include <vector>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace Morf {
     class Session {
@@ -28,11 +28,9 @@ namespace Morf {
             int selected_ = 0;
 
         public:
-            Session(
-                const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
-                const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
-                const std::string& mode
-            );
+            Session(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
+                    const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
+                    const std::string& mode);
             void autoMerge();
 
             int getTotalConflicts() const;
@@ -42,9 +40,10 @@ namespace Morf {
             void acceptTheirs();
 
             bool isResolved() const {
-                return (mode_ == "diff" ||
-                (mode_ == "merge" && activeLeftAdds_.empty() && activeLeftRemoves_.empty() && activeRightAdds_.empty() && activeRightRemoves_.empty()))
-                ? true : false;
+                return (mode_ == "diff" || (mode_ == "merge" && activeLeftAdds_.empty() && activeLeftRemoves_.empty() &&
+                                            activeRightAdds_.empty() && activeRightRemoves_.empty()))
+                           ? true
+                           : false;
             }
             const std::string& getMode() const { return mode_; }
             int getSelectedIndex() const { return selected_; }
@@ -62,6 +61,7 @@ namespace Morf {
             const std::vector<std::vector<std::size_t>>& getTheirAddedIndices() const { return activeRightAdds_; }
             const std::vector<std::vector<std::size_t>>& getTheirRemovedIndices() const { return activeRightRemoves_; }
 
-            const std::pair<std::vector<std::array<float, 3>>, std::vector<std::vector<std::size_t>>> getMergedGeometry() const;
+            const std::pair<std::vector<std::array<float, 3>>, std::vector<std::vector<std::size_t>>>
+            getMergedGeometry() const;
     };
 } // namespace Morf

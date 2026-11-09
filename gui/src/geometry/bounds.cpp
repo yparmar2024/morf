@@ -1,5 +1,6 @@
 // morf - gui/src/geometry/bounds.cpp
 #include "geometry/bounds.hpp"
+
 #include <limits>
 #include <stdexcept>
 
@@ -7,7 +8,7 @@ namespace Morf {
     AABB getFaceBox(const std::vector<std::size_t>& face, const std::vector<std::array<float, 3>>& vertices) {
         if (face.empty()) throw std::invalid_argument("Cannot bound an empty face.");
         const float infinity = std::numeric_limits<float>::infinity();
-        AABB box = { infinity, infinity, infinity, -infinity, -infinity, -infinity };
+        AABB box = {infinity, infinity, infinity, -infinity, -infinity, -infinity};
         for (std::size_t idx : face) {
             const auto& v = vertices.at(idx);
             if (v[0] < box.minX) box.minX = v[0];
@@ -21,8 +22,7 @@ namespace Morf {
         return box;
     }
     bool boxesOverlap(const AABB& a, const AABB& b) {
-        return (a.minX <= b.maxX && a.maxX >= b.minX) &&
-               (a.minY <= b.maxY && a.maxY >= b.minY) &&
+        return (a.minX <= b.maxX && a.maxX >= b.minX) && (a.minY <= b.maxY && a.maxY >= b.minY) &&
                (a.minZ <= b.maxZ && a.maxZ >= b.minZ);
     }
 } // namespace Morf

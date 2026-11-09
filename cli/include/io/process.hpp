@@ -11,7 +11,6 @@ namespace Morf {
         return result + "'";
     }
     inline void runCommand(const std::string& command) {
-        if (std::system(command.c_str()) != 0)
-            throw std::runtime_error("Command failed: " + command);
+        if (std::system(command.c_str()) != 0) throw std::runtime_error("Command failed: " + command);
     }
-}
+} // namespace Morf
