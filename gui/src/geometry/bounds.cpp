@@ -1,11 +1,15 @@
 // morf - gui/src/geometry/bounds.cpp
 #include "geometry/bounds.hpp"
+#include <limits>
+#include <stdexcept>
 
 namespace Morf {
     AABB getFaceBox(const std::vector<std::size_t>& face, const std::vector<std::array<float, 3>>& vertices) {
-        AABB box = { 1e9, 1e9, 1e9, -1e9, -1e9, -1e9 };
+        if (face.empty()) throw std::invalid_argument("Cannot bound an empty face.");
+        const float infinity = std::numeric_limits<float>::infinity();
+        AABB box = { infinity, infinity, infinity, -infinity, -infinity, -infinity };
         for (std::size_t idx : face) {
-            const auto& v = vertices[idx];
+            const auto& v = vertices.at(idx);
             if (v[0] < box.minX) box.minX = v[0];
             if (v[1] < box.minY) box.minY = v[1];
             if (v[2] < box.minZ) box.minZ = v[2];

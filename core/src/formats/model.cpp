@@ -1,8 +1,19 @@
 // morf - core/src/formats/model.cpp
 #include "formats/model.hpp"
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 
 namespace Morf {
     std::vector<std::vector<std::size_t>> GenericModel::getCanonicalForm() const {
+        for (const auto& vertex : vertices)
+            for (float coordinate : vertex)
+                if (!std::isfinite(coordinate)) throw std::runtime_error("Non-finite model coordinate.");
+        for (const auto& face : faces) {
+            if (face.size() < 3) throw std::runtime_error("Face must have at least three vertices.");
+            for (std::size_t index : face)
+                if (index >= vertices.size()) throw std::runtime_error("Face index out of range.");
+        }
         std::vector<std::vector<std::size_t>> canonicalFaces = faces;
 
         for (auto& face : canonicalFaces) {

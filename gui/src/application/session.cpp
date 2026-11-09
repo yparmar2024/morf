@@ -5,18 +5,35 @@
 #include <iterator>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 namespace Morf {
+    namespace {
+        const std::vector<std::array<float, 3>>& requireVertices(const std::vector<std::array<float, 3>>* vertices) {
+            if (!vertices) throw std::invalid_argument("Session requires non-null vertex arrays.");
+            return *vertices;
+        }
+    }
     Session::Session(
         const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
         const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
         const std::string& mode
     ) :
-        baseVertices_(*(verticePtrs[0])),
-        leftVertices_(*(verticePtrs[1])),
-        rightVertices_(*(verticePtrs[2])),
+        baseVertices_(requireVertices(verticePtrs[0])),
+        leftVertices_(requireVertices(verticePtrs[1])),
+        rightVertices_(requireVertices(verticePtrs[2])),
         mode_(mode)
     {
+        if (mode_ != "diff" && mode_ != "merge") throw std::invalid_argument("Invalid session mode.");
+        for (std::size_t i = mode_ == "diff" ? 3 : 0; i < indicePtrs.size(); ++i) {
+            if (!indicePtrs[i]) throw std::invalid_argument("Session requires non-null face arrays.");
+            const auto& vertices = i % 3 == 1 ? (i < 3 ? leftVertices_ : rightVertices_) : baseVertices_;
+            for (const auto& face : *indicePtrs[i]) {
+                if (face.size() < 3) throw std::invalid_argument("Face must have at least three vertices.");
+                for (auto index : face)
+                    if (index >= vertices.size()) throw std::out_of_range("Session face index out of range.");
+            }
+        }
         if (mode_ == "diff") {
             inactiveBaseIndices_  = *(indicePtrs[3]);
             inactiveLeftIndices_  = {};
