@@ -1,5 +1,6 @@
 // morf - cli/src/command/diff.cpp
 #include "command/init.hpp"
+#include "io/process.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -8,9 +9,9 @@
 
 namespace Morf {
     int Init::run() {
-        std::system("git config diff.morf.command \"sh -c 'morf diff \\\"\\$2\\\" \\\"\\$5\\\"' - \"");
-        std::system("git config merge.morf.name \"morf\"");
-        std::system("git config merge.morf.driver \"morf merge %O %A %B\"");
+        runCommand("git config diff.morf.command \"sh -c 'morf diff \\\"\\$2\\\" \\\"\\$5\\\"' - \"");
+        runCommand("git config merge.morf.name \"morf\"");
+        runCommand("git config merge.morf.driver \"morf merge \\\"%O\\\" \\\"%A\\\" \\\"%B\\\"\"");
 
         bool needsAppend = true;
         std::ifstream attrCheck(".gitattributes");
@@ -22,6 +23,7 @@ namespace Morf {
                     break;
                 }
             }
+            if (attrCheck.bad()) throw std::runtime_error("Failed to read .gitattributes.");
             attrCheck.close();
         }
 
@@ -30,6 +32,7 @@ namespace Morf {
             if (gitattributes.is_open()) {
                 gitattributes << "\n*.obj diff=morf merge=morf -text\n";
                 gitattributes.close();
+                if (!gitattributes) throw std::runtime_error("Failed to write .gitattributes.");
             } else {
                 throw std::runtime_error("Could not open or create .gitattributes in the current directory.");
             }

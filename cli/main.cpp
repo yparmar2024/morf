@@ -2,6 +2,11 @@
 #include "command/diff.hpp"
 #include "command/init.hpp"
 #include "command/merge.hpp"
+#include "io/process.hpp"
+#include "io/temporary.hpp"
+#include <filesystem>
+#include <memory>
+#include <stdexcept>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -9,20 +14,26 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> resolveGitLFS(const std::vector<std::string>& path);
+class ResolvedInputs {
+    std::vector<std::unique_ptr<Morf::TemporaryFile>> temporaryFiles_;
+public:
+    std::vector<std::string> resolve(const std::vector<std::string>& paths);
+};
 int help(const std::string& subcommand);
 
 int main(int argc, char* argv[]) {
     if (argc < 2) return help("help");
 
+    ResolvedInputs inputs;
     std::vector<std::string> resolvedPaths;
+    int result = 0;
     std::string subcommand = argv[1];
     if (subcommand == "-h" || subcommand == "--help" || subcommand == "help") {
         return help("help");
     } else if (subcommand == "init") {
         if (argc == 2) {
             try {
-                Morf::Init::run();
+                result = Morf::Init::run();
             } catch (const std::exception& e) {
                 std::cerr << "Error: "<< e.what() << '\n';
                 return 1;
@@ -33,8 +44,8 @@ int main(int argc, char* argv[]) {
     } else if (subcommand == "diff") {
         if (argc == 4) {
             try {
-                resolvedPaths = resolveGitLFS({ argv[2], argv[3] });
-                Morf::Diff::run(resolvedPaths[0], resolvedPaths[1]);
+                resolvedPaths = inputs.resolve({ argv[2], argv[3] });
+                result = Morf::Diff::run(resolvedPaths[0], resolvedPaths[1]);
             } catch (const std::exception& e) {
                 std::cerr << "Error: " << e.what() << '\n';
                 return 1;
@@ -45,8 +56,8 @@ int main(int argc, char* argv[]) {
     } else if (subcommand == "merge") {
         if (argc == 5) {
             try {
-                resolvedPaths = resolveGitLFS({ argv[2], argv[3], argv[4] });
-                Morf::Merge::run(resolvedPaths[0], resolvedPaths[1], resolvedPaths[2]);
+                resolvedPaths = inputs.resolve({ argv[2], argv[3], argv[4] });
+                result = Morf::Merge::run(resolvedPaths[0], resolvedPaths[1], resolvedPaths[2], argv[3]);
             } catch (const std::exception& e) {
                 std::cerr << "Error: " << e.what() << '\n';
                 return 1;
@@ -58,44 +69,36 @@ int main(int argc, char* argv[]) {
         return help(subcommand);
     }
 
-    for (const auto& path : resolvedPaths) {
-        if (path.find(".smudged") != std::string::npos) std::remove(path.c_str());
-    }
-
-    return 0;
+    return result;
 }
 
-std::vector<std::string> resolveGitLFS(const std::vector<std::string>& paths) {
+std::vector<std::string> ResolvedInputs::resolve(const std::vector<std::string>& paths) {
     std::vector<std::string> resolvedPaths;
     resolvedPaths.reserve(paths.size());
-
     for (const auto& path : paths) {
         std::ifstream file(path);
-        if (!file.is_open()) {
-            resolvedPaths.push_back(path);
-            continue;
-        }
-
+        if (!file.is_open()) throw std::runtime_error("Failed to open '" + path + "' for reading.");
         std::string firstLine;
         std::getline(file, firstLine);
+        if (file.bad()) throw std::runtime_error("Failed while reading '" + path + "'.");
+        if (!firstLine.empty() && firstLine.back() == '\r') firstLine.pop_back();
         file.close();
-
-        if (firstLine.find("version https://git-lfs.github.com/spec/v1") != std::string::npos) {
-            std::string smudgedPath = path + ".smudged";
-
-            std::string command = "git lfs smudge < \"" + path + "\" > \"" + smudgedPath + "\"";
-
-            if (std::system(command.c_str()) == 0) {
-                resolvedPaths.push_back(smudgedPath);
-            } else {
-                std::cerr << "Warning: Failed to expand LFS pointer for " << path << '\n';
-                resolvedPaths.push_back(path);
-            }
+        if (firstLine == "version https://git-lfs.github.com/spec/v1") {
+            auto temporary = std::make_unique<Morf::TemporaryFile>(std::filesystem::temp_directory_path());
+            const std::string expanded = temporary->path().string();
+            Morf::runCommand("git lfs smudge < " + Morf::shellQuote(path) + " > " + Morf::shellQuote(expanded));
+            // A skipped smudge filter may report success while returning the pointer unchanged.
+            std::ifstream output(expanded);
+            std::string header;
+            std::getline(output, header);
+            if (!output.is_open() || output.bad() || header.find("version https://git-lfs.github.com/spec/v1") == 0)
+                throw std::runtime_error("Failed to expand LFS pointer for '" + path + "'.");
+            resolvedPaths.push_back(expanded);
+            temporaryFiles_.push_back(std::move(temporary));
         } else {
             resolvedPaths.push_back(path);
         }
     }
-
     return resolvedPaths;
 }
 
