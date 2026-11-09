@@ -19,7 +19,7 @@ namespace Morf {
         return ext;
     }
 
-    int Merge::run(const std::string& baseFilePath, const std::string& ourFilePath, const std::string& theirFilePath) {
+    int Merge::run(const std::string& baseFilePath, const std::string& ourFilePath, const std::string& theirFilePath, const std::string& outputFilePath) {
         if (!std::filesystem::exists(baseFilePath))   { throw std::runtime_error("Base file '" + baseFilePath + "' does not exist."); }
         if (!std::filesystem::exists(ourFilePath))    { throw std::runtime_error("Our file '" + ourFilePath + "' does not exist."); }
         if (!std::filesystem::exists(theirFilePath))  { throw std::runtime_error("Their file '" + theirFilePath + "' does not exist."); }
@@ -49,7 +49,8 @@ namespace Morf {
         };
 
         Session session(verticePtrs, indicePtrs, "merge");
-        app.run(session);
+        if (!app.run(session))
+            throw std::runtime_error("Merge canceled; no output was saved.");
 
         if (session.isResolved()) {
             auto [mergedVertices, mergedFaces] = session.getMergedGeometry();
@@ -58,10 +59,9 @@ namespace Morf {
             for (const auto& v : mergedVertices) model.addVertex(v);
             for (const auto& f : mergedFaces)    model.addFace(f);
 
-            Handler::write(ourFilePath, model);
+            Handler::write(outputFilePath.empty() ? ourFilePath : outputFilePath, model);
         } else {
             throw std::runtime_error("Merge aborted with " + std::to_string(session.getTotalConflicts()) + " conflicts left unresolved.");
-            return 1;
         }
 
         return 0;

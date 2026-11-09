@@ -2,7 +2,7 @@
  * Session logic to store current model states
  */
 #pragma once
-#include "raylib.h"
+#include <string>
 #include <array>
 #include <cstddef>
 #include <vector>

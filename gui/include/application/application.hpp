@@ -21,6 +21,7 @@ namespace Morf {
 
         public:
             Application();
-            void run(Session& session);
+            // True only when the user explicitly chooses to save a resolved merge.
+            bool run(Session& session);
     };
 } // namespace Morf

@@ -33,7 +33,7 @@ namespace Morf {
         Application app;
         const std::array<const std::vector<std::array<float, 3>>*, 3> verticePtrs = {
             &baseModel.getVertices(),
-            {},
+            &baseModel.getVertices(),
             &targetModel.getVertices()
         };
         const std::array<const std::vector<std::vector<std::size_t>>*, 6> indicePtrs = {
