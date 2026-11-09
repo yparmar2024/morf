@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# PR reviews and discussion only; fixes remain a human-reviewed development step.
+language: en-US
+early_access: false
+inheritance: false
+
+reviews:
+  profile: chill
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+    drafts: false
+    ignore_usernames: []
+  auto_approvals:
+    enabled: false
+  request_changes_workflow: false
+  high_level_summary: false
+  auto_title_placeholder: ""
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  poem: false
+  in_progress_fortune: false
+  suggested_labels: false
+  auto_apply_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  post_merge_actions: []
+  path_filters:
+    - "!build/**"
+    - "!_deps/**"
+  path_instructions:
+    - path: "**/*"
+      instructions: >-
+        Prioritize actionable correctness defects, undefined behavior, lifetime and
+        index safety, error propagation, file safety, Git/LFS integration, and
+        regressions. Explain a concrete failure scenario for each finding.
+        Preserve the author's comparison and merge algorithms in bug-fix PRs.
+        Flag suspected algorithmic defects explicitly for discussion with the
+        author; do not assume intended semantics or propose wholesale rewrites.
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+    autofix:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+    custom: []
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "off"
+    issue_assessment:
+      mode: "off"
+
+chat:
+  auto_reply: true
+  art: false
+
+issue_enrichment:
+  auto_enrich:
+    enabled: false
+  planning:
+    enabled: false
+    auto_planning:
+      enabled: false
+  labeling:
+    auto_apply_labels: false
