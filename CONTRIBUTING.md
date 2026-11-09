@@ -57,6 +57,3 @@ Use `morf diff --timings <base> <target>` for an interactive startup report or
 `morf diff --benchmark <base> <target>` for processing without a viewer.
 The same flags work with `merge`; benchmark mode never saves merged output.
 Reports are available in Release builds and are disabled by default.
-
-See [performance comparisons](docs/performance.md) for report interpretation and
-the results expected in performance-focused PRs.

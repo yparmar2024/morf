@@ -10,4 +10,4 @@
 
 <!-- For performance PRs or performance claims, include before/after phase medians,
      ranges, input sizes, build/compiler, machine, sample count, and cache state.
-     See docs/performance.md. Remove this section for unrelated PRs. -->
+     Remove this section for unrelated PRs. -->
