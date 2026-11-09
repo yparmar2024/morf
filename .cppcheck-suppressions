@@ -1,0 +1,4 @@
+# Compiler/SDK headers are supplied by the toolchain, not this repository.
+missingIncludeSystem
+# Downloaded dependencies are outside Morf's lint scope.
+*:*/_deps/*
