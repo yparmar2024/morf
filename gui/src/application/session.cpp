@@ -21,9 +21,12 @@ namespace Morf {
         : baseVertices_(requireVertices(verticePtrs[0])), leftVertices_(requireVertices(verticePtrs[1])),
           rightVertices_(requireVertices(verticePtrs[2])), mode_(mode) {
         if (mode_ != "diff" && mode_ != "merge") throw std::invalid_argument("Invalid session mode.");
+        // Common and removed faces use base indices; additions use their own side.
+        const std::array<const std::vector<std::array<float, 3>>*, 6> faceVertices = {
+            &baseVertices_, &leftVertices_, &baseVertices_, &baseVertices_, &rightVertices_, &baseVertices_};
         for (std::size_t i = mode_ == "diff" ? 3 : 0; i < indicePtrs.size(); ++i) {
             if (!indicePtrs[i]) throw std::invalid_argument("Session requires non-null face arrays.");
-            const auto& vertices = i % 3 == 1 ? (i < 3 ? leftVertices_ : rightVertices_) : baseVertices_;
+            const auto& vertices = *faceVertices[i];
             for (const auto& face : *indicePtrs[i]) {
                 if (face.size() < 3) throw std::invalid_argument("Face must have at least three vertices.");
                 for (auto index : face)

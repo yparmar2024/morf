@@ -111,7 +111,10 @@ namespace Morf {
         auto createMesh = [&]() -> void {
             if (meshIndices.empty()) return;
 
-            Mesh mesh = {0};
+            // Transfer ownership before allocating or uploading any resources.
+            // MeshCleanup also covers failures during allocation and upload.
+            meshes.push_back({0});
+            Mesh& mesh = meshes.back();
             mesh.vertexCount = static_cast<int>(meshVertices.size() / 3);
             mesh.triangleCount = static_cast<int>(meshIndices.size() / 3);
             mesh.vertices = (float*)MemAlloc(meshVertices.size() * sizeof(float));
@@ -119,9 +122,6 @@ namespace Morf {
             mesh.normals = (float*)MemAlloc(meshNormals.size() * sizeof(float));
 
             if (!mesh.vertices || !mesh.indices || !mesh.normals) {
-                MemFree(mesh.vertices);
-                MemFree(mesh.indices);
-                MemFree(mesh.normals);
                 throw std::runtime_error("Failed to allocate render mesh.");
             }
             memcpy(mesh.vertices, meshVertices.data(), meshVertices.size() * sizeof(float));
@@ -130,11 +130,11 @@ namespace Morf {
 
             if (!meshTexcoords.empty()) {
                 mesh.texcoords = (float*)MemAlloc(meshTexcoords.size() * sizeof(float));
+                if (!mesh.texcoords) throw std::runtime_error("Failed to allocate render texture coordinates.");
                 memcpy(mesh.texcoords, meshTexcoords.data(), meshTexcoords.size() * sizeof(float));
             }
 
             UploadMesh(&mesh, false);
-            meshes.push_back(mesh);
 
             meshVertices.clear();
             meshIndices.clear();
