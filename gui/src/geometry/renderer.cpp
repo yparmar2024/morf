@@ -4,6 +4,10 @@
 #include "raymath.h"
 #include "tesselator.h"
 #include <unordered_map>
+#include <climits>
+#include <cstring>
+#include <memory>
+#include <stdexcept>
 
 namespace Morf {
     const char* lightingVs = R"(#version 330
@@ -39,24 +43,40 @@ namespace Morf {
     void Renderer::createModels(const Session& session) {
         if (loaded_) unloadModels();
 
-        baseCommonModel_   = buildModel(session.getBaseVertices(),  session.getCommonBaseIndices(),    LIGHTGRAY);
-        ourCommonModel_    = buildModel(session.getOurVertices(),   session.getOurBaseIndices(),       LIGHTGRAY);
-        theirCommonModel_  = buildModel(session.getTheirVertices(), session.getTheirBaseIndices(),     LIGHTGRAY);
-
-        ourAddsModel_      = buildModel(session.getOurVertices(),   session.getOurAddedIndices(),      { 0, 255, 0, 180 });
-        ourRemovesModel_   = buildModel(session.getOurVertices(),   session.getOurRemovedIndices(),    { 255, 0, 0, 180 });
-        theirAddsModel_    = buildModel(session.getTheirVertices(), session.getTheirAddedIndices(),    { 0, 255, 0, 180 });
-        theirRemovesModel_ = buildModel(session.getTheirVertices(), session.getTheirRemovedIndices(),  { 255, 0, 0, 180 });
-        
-        initLighting();
         loaded_ = true;
+        try {
+            baseCommonModel_   = buildModel(session.getBaseVertices(),  session.getCommonBaseIndices(),    LIGHTGRAY);
+            ourCommonModel_    = buildModel(session.getOurVertices(),   session.getOurBaseIndices(),       LIGHTGRAY);
+            theirCommonModel_  = buildModel(session.getTheirVertices(), session.getTheirBaseIndices(),     LIGHTGRAY);
+
+            ourAddsModel_      = buildModel(session.getOurVertices(),   session.getOurAddedIndices(),      { 0, 255, 0, 180 });
+            ourRemovesModel_   = buildModel(session.getBaseVertices(),  session.getOurRemovedIndices(),    { 255, 0, 0, 180 });
+            theirAddsModel_    = buildModel(session.getTheirVertices(), session.getTheirAddedIndices(),    { 0, 255, 0, 180 });
+            theirRemovesModel_ = buildModel(session.getBaseVertices(),  session.getTheirRemovedIndices(),  { 255, 0, 0, 180 });
+
+            initLighting();
+        } catch (...) {
+            unloadModels();
+            throw;
+        }
     }
 
     ::Model Renderer::buildModel(const std::vector<std::array<float, 3>>& vertices, const std::vector<std::vector<std::size_t>>& indices, Color color) {
         if (indices.empty()) return { 0 };
+        for (const auto& face : indices) {
+            if (face.size() < 3 || face.size() > static_cast<std::size_t>(INT_MAX / 3))
+                throw std::runtime_error("Invalid face size for rendering.");
+            for (auto index : face)
+                if (index >= vertices.size()) throw std::out_of_range("Render face index out of range.");
+        }
 
         ::Model model = { 0 };
         std::vector<Mesh> meshes;
+        struct MeshCleanup {
+            std::vector<Mesh>& meshes;
+            bool transferred = false;
+            ~MeshCleanup() { if (!transferred) for (auto mesh : meshes) UnloadMesh(mesh); }
+        } cleanup{meshes};
 
         // Temporary mesh accumulators
         std::vector<float> meshVertices;
@@ -82,7 +102,7 @@ namespace Morf {
         std::unordered_map<std::array<Vector3, 2>, unsigned short, Vector3Hash, Vector3Equal> vertexMap;
 
         auto createMesh = [&]() -> void {
-            if (vertices.empty()) return;
+            if (meshIndices.empty()) return;
 
             Mesh mesh = { 0 };
             mesh.vertexCount   = static_cast<int>(meshVertices.size() / 3);
@@ -91,6 +111,12 @@ namespace Morf {
             mesh.indices       = (unsigned short*)MemAlloc(meshIndices.size() * sizeof(unsigned short));
             mesh.normals       = (float*)MemAlloc(meshNormals.size() * sizeof(float));
 
+            if (!mesh.vertices || !mesh.indices || !mesh.normals) {
+                MemFree(mesh.vertices);
+                MemFree(mesh.indices);
+                MemFree(mesh.normals);
+                throw std::runtime_error("Failed to allocate render mesh.");
+            }
             memcpy(mesh.vertices, meshVertices.data(), meshVertices.size() * sizeof(float));
             memcpy(mesh.indices,  meshIndices.data(),  meshIndices.size()  * sizeof(unsigned short));
             memcpy(mesh.normals,  meshNormals.data(),  meshNormals.size() * sizeof(float));
@@ -111,7 +137,9 @@ namespace Morf {
         };
 
         std::vector<float> contourVertices;
-        TESStesselator* tess = tessNewTess(nullptr);
+        std::unique_ptr<TESStesselator, decltype(&tessDeleteTess)> tessOwner(tessNewTess(nullptr), tessDeleteTess);
+        auto* tess = tessOwner.get();
+        if (!tess) throw std::runtime_error("Failed to allocate tessellator.");
         for (const auto& contour : indices) {
             int numVertices = static_cast<int>(contour.size());
 
@@ -125,17 +153,25 @@ namespace Morf {
             }
 
             tessAddContour(tess, 3, contourVertices.data(), 3 * sizeof(float), numVertices);
-            tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 3, nullptr);
+            if (!tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 3, nullptr))
+                throw std::runtime_error("Failed to tessellate face.");
 
             const float* tessVertices = tessGetVertices(tess);
             const int* tessIndices    = tessGetElements(tess);
             int totalVertices         = tessGetVertexCount(tess);
             int totalTriangles        = tessGetElementCount(tess);
 
-            if ((meshVertices.size() / 3) + totalVertices > USHRT_MAX) createMesh();
+            if (totalTriangles < 0 || totalVertices < 0 ||
+                (totalTriangles > 0 && (!tessVertices || !tessIndices)))
+                throw std::runtime_error("Invalid tessellation output.");
+            for (std::size_t k = 0; k < 3 * static_cast<std::size_t>(totalTriangles); ++k)
+                if (tessIndices[k] < 0 || tessIndices[k] >= totalVertices)
+                    throw std::runtime_error("Invalid tessellation vertex index.");
 
             Vector3 computedNormal = { 0 };
-            for (std::size_t i = 0; i < 3 * totalTriangles; ++i) {
+            for (std::size_t i = 0; i < 3 * static_cast<std::size_t>(totalTriangles); ++i) {
+                // Flush only between triangles; a single large polygon can exceed 16-bit indices.
+                if (i % 3 == 0 && meshVertices.size() / 3 + 3 > USHRT_MAX) createMesh();
                 int idx = tessIndices[i];
                 Vector3 v = {
                     tessVertices[(3 * idx)],
@@ -183,7 +219,7 @@ namespace Morf {
                 }
             }
         }
-        tessDeleteTess(tess);
+        tessOwner.reset();
         createMesh();
 
         if (meshes.empty()) return { 0 };
@@ -191,16 +227,28 @@ namespace Morf {
         model.transform = MatrixIdentity();
         model.meshCount = (int)meshes.size();
         model.meshes = (::Mesh*)MemAlloc(meshes.size() * sizeof(::Mesh));
-        memcpy(model.meshes, meshes.data(), meshes.size() * sizeof(::Mesh));
-
         model.materialCount = 1;
         model.materials = (::Material*)MemAlloc(sizeof(::Material));
+        model.meshMaterial = (int*)MemAlloc(meshes.size() * sizeof(int));
+        if (!model.meshes || !model.materials || !model.meshMaterial) {
+            MemFree(model.meshes);
+            MemFree(model.materials);
+            MemFree(model.meshMaterial);
+            throw std::runtime_error("Failed to allocate render model.");
+        }
+        memcpy(model.meshes, meshes.data(), meshes.size() * sizeof(::Mesh));
         model.materials[0] = LoadMaterialDefault();
+        if (!model.materials[0].maps) {
+            MemFree(model.meshes);
+            MemFree(model.materials);
+            MemFree(model.meshMaterial);
+            throw std::runtime_error("Failed to allocate render material.");
+        }
         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = color;
 
-        model.meshMaterial = (int*)MemAlloc(meshes.size() * sizeof(int));
         for (std::size_t i = 0; i < meshes.size(); ++i) model.meshMaterial[i] = 0;
 
+        cleanup.transferred = true;
         return model;
     }
 
