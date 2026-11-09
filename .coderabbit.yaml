@@ -12,6 +12,9 @@ reviews:
     auto_pause_after_reviewed_commits: 0
     drafts: false
     ignore_usernames: []
+    # Also review tooling PRs stacked on a refactor branch.
+    base_branches:
+      - '^refactor/.*$'
   auto_approvals:
     enabled: false
   request_changes_workflow: false
