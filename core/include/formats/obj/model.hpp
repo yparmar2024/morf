@@ -11,7 +11,7 @@ namespace Morf {
     };
 
     struct VertexTexture {
-            float u, v, w = 0.0f;
+            float u = 0.0f, v = 0.0f, w = 0.0f;
     };
 
     struct VertexNormal {

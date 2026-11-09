@@ -78,6 +78,7 @@ namespace Morf {
         struct MeshCleanup {
                 std::vector<Mesh>& meshes;
                 bool transferred = false;
+                explicit MeshCleanup(std::vector<Mesh>& meshes) : meshes(meshes) {}
                 ~MeshCleanup() {
                     if (!transferred)
                         for (auto mesh : meshes) UnloadMesh(mesh);
