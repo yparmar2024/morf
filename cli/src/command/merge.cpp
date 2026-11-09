@@ -5,6 +5,7 @@
 #include "compare/engine.hpp"
 #include "formats/model.hpp"
 #include "formats/obj/handler.hpp"
+#include "performance/timing.hpp"
 
 #include <algorithm>
 #include <array>
@@ -21,7 +22,7 @@ namespace Morf {
     }
 
     int Merge::run(const std::string& baseFilePath, const std::string& ourFilePath, const std::string& theirFilePath,
-                   const std::string& outputFilePath) {
+                   const std::string& outputFilePath, bool benchmark) {
         if (!std::filesystem::exists(baseFilePath)) {
             throw std::runtime_error("Base file '" + baseFilePath + "' does not exist.");
         }
@@ -35,9 +36,13 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        GenericModel baseModel = Handler::convert(Handler::parse(baseFilePath));
-        GenericModel ourModel = Handler::convert(Handler::parse(ourFilePath));
-        GenericModel theirModel = Handler::convert(Handler::parse(theirFilePath));
+        const auto loadModel = [](const std::string& path, const char* label) {
+            ScopedPhase phase(label);
+            return Handler::convert(Handler::parse(path));
+        };
+        GenericModel baseModel = loadModel(baseFilePath, "Base model");
+        GenericModel ourModel = loadModel(ourFilePath, "Our model");
+        GenericModel theirModel = loadModel(theirFilePath, "Their model");
         Delta ourDelta = engine.computeDelta(baseModel, ourModel);
         Delta theirDelta = engine.computeDelta(baseModel, theirModel);
 
@@ -49,6 +54,7 @@ namespace Morf {
             &theirDelta.common, &theirDelta.added, &theirDelta.removed};
 
         Session session(verticePtrs, indicePtrs, "merge");
+        if (benchmark) return 0;
         if (!app.run(session)) throw std::runtime_error("Merge canceled; no output was saved.");
 
         if (session.isResolved()) {

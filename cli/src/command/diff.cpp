@@ -5,6 +5,7 @@
 #include "compare/engine.hpp"
 #include "formats/model.hpp"
 #include "formats/obj/handler.hpp"
+#include "performance/timing.hpp"
 
 #include <algorithm>
 #include <array>
@@ -20,7 +21,7 @@ namespace Morf {
         return ext;
     }
 
-    int Diff::run(const std::string& baseFilePath, const std::string& targetFilePath) {
+    int Diff::run(const std::string& baseFilePath, const std::string& targetFilePath, bool benchmark) {
         if (!std::filesystem::exists(baseFilePath)) {
             throw std::runtime_error("Base file '" + baseFilePath + "' does not exist.");
         }
@@ -31,8 +32,12 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        GenericModel baseModel = Handler::convert(Handler::parse(baseFilePath));
-        GenericModel targetModel = Handler::convert(Handler::parse(targetFilePath));
+        const auto loadModel = [](const std::string& path, const char* label) {
+            ScopedPhase phase(label);
+            return Handler::convert(Handler::parse(path));
+        };
+        GenericModel baseModel = loadModel(baseFilePath, "Base model");
+        GenericModel targetModel = loadModel(targetFilePath, "Target model");
         Delta delta = engine.computeDelta(baseModel, targetModel);
 
         Application app;
@@ -42,6 +47,7 @@ namespace Morf {
             nullptr, nullptr, nullptr, &delta.common, &delta.added, &delta.removed};
 
         Session session(verticePtrs, indicePtrs, "diff");
+        if (benchmark) return 0;
         app.run(session);
 
         return 0;
