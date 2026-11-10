@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 namespace Morf {
@@ -30,6 +31,14 @@ namespace Morf {
                     bool finished = false;
                     bool failed = false;
             };
+
+        public:
+            class WorkerPhases {
+                    friend class PhaseTimings;
+                    std::vector<Entry> entries_;
+            };
+
+        private:
             struct Input {
                     std::string name;
                     std::uintmax_t bytes = 0;
@@ -41,6 +50,7 @@ namespace Morf {
             bool benchmark_;
             bool reported_ = false;
             bool failed_ = false;
+            WorkerPhases* worker_ = nullptr;
             Clock::time_point start_{};
             std::size_t current_ = none;
             std::vector<Entry> entries_;
@@ -75,11 +85,26 @@ namespace Morf {
                 if (enabled_) start_ = Clock::now();
                 active_ = enabled_ ? this : nullptr;
             }
+            PhaseTimings(bool enabled, WorkerPhases& worker) : PhaseTimings(enabled) { worker_ = &worker; }
             PhaseTimings(const PhaseTimings&) = delete;
             PhaseTimings& operator=(const PhaseTimings&) = delete;
             ~PhaseTimings() {
                 active_ = previous_;
-                report();
+                if (worker_)
+                    worker_->entries_ = std::move(entries_);
+                else
+                    report();
+            }
+            static bool isActive() noexcept { return active_ != nullptr; }
+            // Read worker records only after the task has finished. Their roots overlap the loading phase.
+            static void collectWorker(const WorkerPhases& worker) {
+                if (!active_) return;
+                auto& entries = active_->entries_;
+                const auto offset = entries.size();
+                for (auto entry : worker.entries_) {
+                    if (entry.parent != none) entry.parent += offset;
+                    entries.push_back(entry);
+                }
             }
             void markFailed() noexcept { failed_ = true; }
             void addInput(const std::string& name, const std::string& resolvedPath) {
@@ -126,6 +151,7 @@ namespace Morf {
                 }
                 output << "Startup/processing wall: " << wall << " ms (includes uninstrumented work).\n";
                 output << "Nested inclusive values overlap; do not sum them.\n";
+                output << "Model workers may overlap each other and the OBJ loading wall time.\n";
                 stream << output.str();
                 reported_ = true;
             }

@@ -2,10 +2,9 @@
 #include "application/application.hpp"
 #include "application/session.hpp"
 #include "command/diff.hpp"
+#include "command/load_models.hpp"
 #include "compare/engine.hpp"
 #include "formats/model.hpp"
-#include "formats/obj/handler.hpp"
-#include "performance/timing.hpp"
 
 #include <algorithm>
 #include <array>
@@ -32,12 +31,8 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        const auto loadModel = [](const std::string& path, const char* label) {
-            ScopedPhase phase(label);
-            return Handler::convert(Handler::parse(path));
-        };
-        GenericModel baseModel = loadModel(baseFilePath, "Base model");
-        GenericModel targetModel = loadModel(targetFilePath, "Target model");
+        const auto [baseModel, targetModel] =
+            loadObjModels(std::array{baseFilePath, targetFilePath}, {"Base model", "Target model"});
         Delta delta = engine.computeDelta(baseModel, targetModel);
 
         Application app;

@@ -9,6 +9,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <system_error>
@@ -65,14 +66,14 @@ namespace Morf {
                 if (size_ != 0) ::munmap(mapping_, size_);
             }
 
-            // Match getline's newline handling, including a final unterminated line.
-            bool readLine(std::string& line) {
-                line.clear();
+            // Views remain valid until this mapping is destroyed. Match getline's newline handling.
+            bool readLine(std::string_view& line) {
+                line = {};
                 if (position_ == size_) return false;
                 const auto* begin = static_cast<const char*>(mapping_) + position_;
                 const auto* newline = static_cast<const char*>(std::memchr(begin, '\n', size_ - position_));
                 const auto length = newline ? static_cast<std::size_t>(newline - begin) : size_ - position_;
-                line.assign(begin, length);
+                line = std::string_view(begin, length);
                 position_ += length + (newline ? 1 : 0);
                 return true;
             }
