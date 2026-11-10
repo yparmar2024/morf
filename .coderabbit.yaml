@@ -12,9 +12,11 @@ reviews:
     auto_pause_after_reviewed_commits: 0
     drafts: false
     ignore_usernames: []
-    # Also review tooling PRs stacked on a refactor branch.
+    # Review pull requests stacked on these branches as well as main.
     base_branches:
       - '^refactor/.*$'
+      - '^chore/cpp-lint-and-ci$'
+      - '^perf/parsing-handler-obj$'
   auto_approvals:
     enabled: false
   request_changes_workflow: false
