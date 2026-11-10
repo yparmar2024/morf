@@ -56,7 +56,9 @@ namespace Morf {
         }
     } // namespace
 
-    Model Handler::parse(const std::string& filePath) {
+    Model Handler::parse(const std::string& filePath) { return parse(filePath, std::cerr); }
+
+    Model Handler::parse(const std::string& filePath, std::ostream& diagnostics) {
         Model model;
         MappedFile file(filePath);
         std::string_view line;
@@ -187,15 +189,15 @@ namespace Morf {
         }
 
         if (!unknownKeywords.empty()) {
-            std::cerr << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
+            diagnostics << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
             for (const auto& [keyword, count] : unknownKeywords) {
-                std::cerr << "WARNING:     > " << keyword << " (" << count << " occurences)\n";
+                diagnostics << "WARNING:     > " << keyword << " (" << count << " occurences)\n";
             }
         }
         if (!invalidArgs.empty()) {
-            std::cerr << "WARNING: Invalid OBJ args found for " << filePath << ":\n";
+            diagnostics << "WARNING: Invalid OBJ args found for " << filePath << ":\n";
             for (const auto& [arg, count] : invalidArgs) {
-                std::cerr << "WARNING:     > " << arg << " (" << count << " occurences)\n";
+                diagnostics << "WARNING:     > " << arg << " (" << count << " occurences)\n";
             }
         }
         return model;
