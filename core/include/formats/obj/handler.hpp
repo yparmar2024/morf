@@ -5,12 +5,14 @@
 #include "formats/model.hpp"
 #include "formats/obj/model.hpp"
 
+#include <iosfwd>
 #include <string>
 
 namespace Morf {
     class Handler {
         public:
             static Model parse(const std::string& filePath);
+            static Model parse(const std::string& filePath, std::ostream& diagnostics);
             static GenericModel convert(const Model& model);
             static void write(const std::string& filePath, const GenericModel& model);
     };

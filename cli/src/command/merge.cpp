@@ -1,6 +1,7 @@
 // morf - cli/src/command/merge.cpp
 #include "application/application.hpp"
 #include "application/session.hpp"
+#include "command/load_models.hpp"
 #include "command/merge.hpp"
 #include "compare/engine.hpp"
 #include "formats/model.hpp"
@@ -35,9 +36,8 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        GenericModel baseModel = Handler::convert(Handler::parse(baseFilePath));
-        GenericModel ourModel = Handler::convert(Handler::parse(ourFilePath));
-        GenericModel theirModel = Handler::convert(Handler::parse(theirFilePath));
+        const auto [baseModel, ourModel, theirModel] =
+            loadObjModels(std::array{baseFilePath, ourFilePath, theirFilePath});
         Delta ourDelta = engine.computeDelta(baseModel, ourModel);
         Delta theirDelta = engine.computeDelta(baseModel, theirModel);
 

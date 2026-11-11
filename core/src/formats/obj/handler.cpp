@@ -1,40 +1,84 @@
 // morf - core/src/formats/obj/handler.cpp
 #include "formats/obj/handler.hpp"
+#include "io/mapped_file.hpp"
 #include "io/temporary.hpp"
 
+#include <charconv>
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <istream>
 #include <limits>
-#include <sstream>
+#include <locale>
 #include <stdexcept>
+#include <streambuf>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <unordered_map>
 
 namespace Morf {
-    Model Handler::parse(const std::string& filePath) {
+    namespace {
+        // Preserve formatted numeric extraction without copying the mapped line into a stringstream.
+        class ViewBuffer : public std::streambuf {
+            public:
+                explicit ViewBuffer(std::string_view view) {
+                    // streambuf's get area requires char*, but this buffer only exposes reads.
+                    if (!view.empty()) {
+                        auto* begin = const_cast<char*>(view.data());
+                        setg(begin, begin, begin + view.size());
+                    }
+                }
+        };
+
+        std::string_view takeToken(std::string_view& input, const std::ctype<char>& whitespace) {
+            std::size_t start = 0;
+            while (start < input.size() && whitespace.is(std::ctype_base::space, input[start])) ++start;
+            input.remove_prefix(start);
+            std::size_t length = 0;
+            while (length < input.size() && !whitespace.is(std::ctype_base::space, input[length])) ++length;
+            const auto token = input.substr(0, length);
+            input.remove_prefix(length);
+            return token;
+        }
+
+        bool parseIndex(std::string_view part, int& index) {
+            // stoi accepts a leading '+', whereas from_chars only accepts a leading '-'.
+            if (part.front() == '+') {
+                part.remove_prefix(1);
+                if (part.empty() || part.front() == '-') return false;
+            }
+            const auto result = std::from_chars(part.data(), part.data() + part.size(), index);
+            return result.ec == std::errc{} && result.ptr == part.data() + part.size() && index != 0;
+        }
+    } // namespace
+
+    Model Handler::parse(const std::string& filePath) { return parse(filePath, std::cerr); }
+
+    Model Handler::parse(const std::string& filePath, std::ostream& diagnostics) {
         Model model;
-        std::ifstream file(filePath);
-        if (!file.is_open()) throw std::runtime_error("Failed to open '" + filePath + "' for reading.");
-        std::string line;
+        MappedFile file(filePath);
+        std::string_view line;
         std::size_t lineNumber = 0;
+        const std::locale locale;
+        const auto& whitespace = std::use_facet<std::ctype<char>>(locale);
         std::unordered_map<std::string, int> unknownKeywords;
         std::unordered_map<std::string, int> invalidArgs;
 
-        while (std::getline(file, line)) {
+        while (file.readLine(line)) {
             ++lineNumber;
             // Inline comments must not be parsed as coordinates or face references.
-            line.erase(line.find('#') == std::string::npos ? line.size() : line.find('#'));
-            std::stringstream ss(line);
+            line = line.substr(0, line.find('#'));
             const auto invalidRecord = [&]() {
                 return std::runtime_error("Invalid OBJ record in '" + filePath + "' at line " +
                                           std::to_string(lineNumber) + ".");
             };
-            std::string keyword;
-            ss >> keyword;
+            const auto keyword = takeToken(line, whitespace);
+            ViewBuffer buffer(line);
+            std::istream ss(&buffer);
 
             if (keyword.empty() || keyword[0] == '#') {
                 continue;
@@ -61,32 +105,22 @@ namespace Morf {
                 model.addNormalVertex({x, y, z});
             } else if (keyword == "f") {
                 Face face;
-                std::string token;
                 bool validFace = true;
-                while (ss >> token) {
+                for (auto token = takeToken(line, whitespace); !token.empty(); token = takeToken(line, whitespace)) {
                     VertexData vData;
-                    std::stringstream ts(token);
-                    std::string part;
+                    auto remaining = token;
                     int slot = 0;
 
-                    while (std::getline(ts, part, '/')) {
+                    while (!remaining.empty()) {
+                        const auto separator = remaining.find('/');
+                        const auto part = remaining.substr(0, separator);
                         if (slot >= 3 || (slot == 0 && part.empty())) {
                             validFace = false;
                             break;
                         }
                         if (!part.empty()) {
                             int raw;
-                            try {
-                                std::size_t consumed = 0;
-                                raw = std::stoi(part, &consumed);
-                                if (consumed != part.size() || raw == 0) {
-                                    validFace = false;
-                                    break;
-                                }
-                            } catch (const std::invalid_argument&) {
-                                validFace = false;
-                                break;
-                            } catch (const std::out_of_range&) {
+                            if (!parseIndex(part, raw)) {
                                 validFace = false;
                                 break;
                             }
@@ -111,6 +145,8 @@ namespace Morf {
                                 vData.vnIdx = static_cast<int>(idx);
                         }
                         ++slot;
+                        if (separator == std::string_view::npos) break;
+                        remaining.remove_prefix(separator + 1);
                     }
                     if (vData.vIdx < 0 || token.back() == '/') validFace = false;
                     if (validFace)
@@ -146,26 +182,22 @@ namespace Morf {
                     }
                 }
             } else if (keyword == "o") {
-                std::string name;
-                ss >> name;
-                model.addObject({name, {}});
+                model.addObject({std::string(takeToken(line, whitespace)), {}});
             } else {
-                unknownKeywords[keyword]++;
+                unknownKeywords[std::string(keyword)]++;
             }
         }
 
-        if (file.bad()) throw std::runtime_error("Failed while reading '" + filePath + "'.");
-
         if (!unknownKeywords.empty()) {
-            std::cerr << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
+            diagnostics << "WARNING: Unrecognized OBJ keywords found for " << filePath << ":\n";
             for (const auto& [keyword, count] : unknownKeywords) {
-                std::cerr << "WARNING:     > " << keyword << " (" << count << " occurences)\n";
+                diagnostics << "WARNING:     > " << keyword << " (" << count << " occurences)\n";
             }
         }
         if (!invalidArgs.empty()) {
-            std::cerr << "WARNING: Invalid OBJ args found for " << filePath << ":\n";
+            diagnostics << "WARNING: Invalid OBJ args found for " << filePath << ":\n";
             for (const auto& [arg, count] : invalidArgs) {
-                std::cerr << "WARNING:     > " << arg << " (" << count << " occurences)\n";
+                diagnostics << "WARNING:     > " << arg << " (" << count << " occurences)\n";
             }
         }
         return model;
