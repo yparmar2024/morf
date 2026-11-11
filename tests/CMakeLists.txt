@@ -19,7 +19,8 @@ target_compile_definitions(morf_core_tests PRIVATE MORF_FIXTURES_DIR="${CMAKE_CU
 add_test(NAME core COMMAND morf_core_tests)
 set_tests_properties(core PROPERTIES TIMEOUT 30)
 
-find_package(Git REQUIRED)
+# GIT_CONFIG_GLOBAL keeps the CLI scenarios independent of the user's configuration.
+find_package(Git 2.32 REQUIRED)
 foreach(scenario IN ITEMS help arguments input_errors headless literal_paths init init_existing init_comment init_partial init_failure git_drivers lfs)
     add_test(NAME "cli.${scenario}"
         COMMAND "${CMAKE_COMMAND}"
