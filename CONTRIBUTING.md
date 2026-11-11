@@ -29,10 +29,11 @@ Formatting includes Morf's C++ files in `cli/`, `core/`, `gui/`, and `support/`.
 
 ## Static analysis
 
-Cppcheck checks Morf's sources for errors, warnings, and portability issues.
+Cppcheck 2.7 or newer checks Morf's sources for errors, warnings, and portability issues.
 Use a Makefile or Ninja generator with `CMAKE_EXPORT_COMPILE_COMMANDS` enabled
 to get the `cppcheck` target. The target fails on reported findings and filters
-the compilation database to Morf's source directories.
+the compilation database to Morf's source files. An older Cppcheck installation
+produces a configure warning and leaves the target unavailable.
 
 ```sh
 cmake --build build --target cppcheck
