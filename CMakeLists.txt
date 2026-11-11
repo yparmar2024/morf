@@ -28,4 +28,9 @@ add_subdirectory(core)
 add_subdirectory(gui)
 add_subdirectory(cli)
 
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+
 include(cmake/DeveloperTools.cmake)

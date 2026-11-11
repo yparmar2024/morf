@@ -1,0 +1,15 @@
+# Authored for Morf. Two material assignments for future preservation work.
+mtllib materials.mtl
+o panels
+v 0 0 0
+v 1 0 0
+v 0 1 0
+v 3 0 0
+v 4 0 0
+v 3 1 0
+g left_panel
+usemtl red
+f 1 2 3
+g right_panel
+usemtl blue
+f 4 5 6

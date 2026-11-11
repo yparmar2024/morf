@@ -18,6 +18,8 @@ Release/
 *.obj
 *.jpg
 *.mtl
+!tests/fixtures/*.obj
+!tests/fixtures/*.mtl
 
 # Ignore the subfolders where CMake downloads Raylib, ImGui, and nanoflann
 _deps/
