@@ -7,6 +7,8 @@ file(GLOB_RECURSE MORF_CXX_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/gui/*.cpp"
     "${PROJECT_SOURCE_DIR}/gui/*.hpp"
     "${PROJECT_SOURCE_DIR}/support/*.hpp"
+    "${PROJECT_SOURCE_DIR}/tests/*.cpp"
+    "${PROJECT_SOURCE_DIR}/tests/*.hpp"
 )
 list(SORT MORF_CXX_FILES)
 
@@ -46,10 +48,18 @@ if(MORF_CPPCHECK AND CMAKE_EXPORT_COMPILE_COMMANDS AND CMAKE_GENERATOR MATCHES "
         foreach(source IN LISTS MORF_CXX_FILES)
             list(APPEND morf_cppcheck_filters "--file-filter=${source}")
         endforeach()
+        set(morf_cppcheck_dependencies)
+        foreach(dependency IN ITEMS raylib libtess2 Catch2)
+            FetchContent_GetProperties(${dependency} SOURCE_DIR dependency_source)
+            if(dependency_source)
+                list(APPEND morf_cppcheck_dependencies "--suppress=*:${dependency_source}/*")
+            endif()
+        endforeach()
         add_custom_target(cppcheck
             COMMAND "${MORF_CPPCHECK}"
                 "--project=${PROJECT_BINARY_DIR}/compile_commands.json"
                 ${morf_cppcheck_filters}
+                ${morf_cppcheck_dependencies}
                 --enable=warning,portability
                 --error-exitcode=1
                 --inline-suppr

@@ -18,7 +18,7 @@ braces, and a 120-column limit. Quoted includes precede system includes; both
 groups are alphabetically ordered, including the matching source header.
 
 ```sh
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 cmake --build build --target format
 cmake --build build --target format-check
 ```
@@ -40,14 +40,32 @@ cmake --build build --target cppcheck
 ```
 
 On macOS, install the tools with `brew install clang-format cppcheck`. An ordinary
-build does not require either tool. No Python scripts or test framework are added.
+build does not require either tool.
+
+## Tests
+
+Core tests use Catch2, fetched at a pinned commit when `BUILD_TESTING` is enabled
+(the default). Configure with `-DBUILD_TESTING=OFF` to build without the test dependency.
+
+```sh
+cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build build --parallel
+cd build
+ctest --output-on-failure --parallel 2
+```
+
+The CLI tests require Git 2.32 or newer for `GIT_CONFIG_GLOBAL` isolation and run
+the built executable from separate temporary Git repositories with isolated Git
+configuration. They exercise headless commands, Git driver
+registration, and deterministic LFS smudge responses. GUI clicks and rendering
+are outside this initial suite. Fixtures in `tests/fixtures/` are small models
+authored for this project; the material fixture supports later OBJ keyword work.
 
 ## Continuous integration
 
 GitHub Actions builds on Ubuntu and macOS and runs formatting and Cppcheck on
 macOS for pull requests and pushes to `main`, `refactor/**`, and `chore/**`.
-Checks report results without modifying source files, committing fixes, deploying,
-or opening a graphical viewer. No automated test suite is configured yet.
+The build jobs also run the core and CLI tests through CTest.
 
 Performance/style suggestions are deferred; this first pass gates correctness
 and portability without requiring algorithm or optimization changes.

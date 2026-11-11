@@ -19,7 +19,8 @@ namespace Morf {
         if (attrCheck.is_open()) {
             std::string line;
             while (std::getline(attrCheck, line)) {
-                if (line.find("diff=morf") != std::string::npos) {
+                if (!line.empty() && line.back() == '\r') line.pop_back();
+                if (line == "*.obj diff=morf merge=morf -text") {
                     needsAppend = false;
                     break;
                 }
