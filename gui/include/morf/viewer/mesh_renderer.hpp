@@ -1,8 +1,8 @@
-/* morf - gui/include/geometry/renderer.hpp
+/* morf - gui/include/morf/viewer/mesh_renderer.hpp
  * Rendering logic to convert internal model to Raylib-facing model
  */
 #pragma once
-#include "application/session.hpp"
+#include "morf/merge/comparison_session.hpp"
 #include "raylib.h"
 
 #include <array>
@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace Morf {
-    class Renderer {
+    class MeshRenderer {
         private:
             ::Model baseCommonModel_ = {0};
             ::Model ourCommonModel_ = {0};
@@ -24,13 +24,13 @@ namespace Morf {
             bool loaded_ = false;
 
         public:
-            void createModels(const Session& session);
+            void createModels(const ComparisonSession& session);
             ::Model buildModel(const std::vector<std::array<float, 3>>& vertices,
                                const std::vector<std::vector<std::size_t>>& indices, Color color);
             void drawFullView();
             void drawLeftView();
             void drawRightView();
-            void drawHighlight(const Session& session);
+            void drawHighlight(const ComparisonSession& session);
             void unloadModels();
             void initLighting();
     };

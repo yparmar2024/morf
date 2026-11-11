@@ -1,4 +1,4 @@
-/* morf - core/include/formats/obj/model.hpp
+/* morf - core/include/morf/formats/obj/obj_model.hpp
  * Model for .obj file format
  */
 #pragma once
@@ -31,7 +31,7 @@ namespace Morf {
             std::vector<Face> faces;
     };
 
-    class Model {
+    class ObjModel {
         private:
             std::vector<Vertex> vertices;
             std::vector<VertexTexture> textureVertices;

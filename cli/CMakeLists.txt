@@ -9,4 +9,4 @@ add_executable(morf
 
 target_include_directories(morf PRIVATE include)
 target_compile_features(morf PRIVATE cxx_std_17)
-target_link_libraries(morf PRIVATE morfCore morfGui morfTiming Threads::Threads)
+target_link_libraries(morf PRIVATE morfGui morfCore morfTiming Threads::Threads)

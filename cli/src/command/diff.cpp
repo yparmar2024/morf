@@ -1,10 +1,10 @@
 // morf - cli/src/command/diff.cpp
-#include "application/application.hpp"
-#include "application/session.hpp"
 #include "command/diff.hpp"
 #include "command/load_models.hpp"
-#include "compare/engine.hpp"
-#include "formats/model.hpp"
+#include "morf/compare/mesh_diff.hpp"
+#include "morf/geometry/mesh.hpp"
+#include "morf/merge/comparison_session.hpp"
+#include "morf/viewer/viewer.hpp"
 
 #include <algorithm>
 #include <array>
@@ -30,20 +30,19 @@ namespace Morf {
 
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
-        Engine engine;
         const auto [baseModel, targetModel] =
             loadObjModels(std::array{baseFilePath, targetFilePath}, {"Base model", "Target model"});
-        Delta delta = engine.computeDelta(baseModel, targetModel);
+        Delta delta = MeshDiff::computeDelta(baseModel, targetModel);
 
-        Application app;
+        Viewer viewer;
         const std::array<const std::vector<std::array<float, 3>>*, 3> verticePtrs = {
             &baseModel.getVertices(), &baseModel.getVertices(), &targetModel.getVertices()};
         const std::array<const std::vector<std::vector<std::size_t>>*, 6> indicePtrs = {
             nullptr, nullptr, nullptr, &delta.common, &delta.added, &delta.removed};
 
-        Session session(verticePtrs, indicePtrs, "diff");
+        ComparisonSession session(verticePtrs, indicePtrs, "diff");
         if (benchmark) return 0;
-        app.run(session);
+        viewer.run(session);
 
         return 0;
     }

@@ -1,6 +1,6 @@
-// morf - gui/src/geometry/renderer.cpp
-#include "application/session.hpp"
-#include "geometry/renderer.hpp"
+// morf - gui/src/viewer/mesh_renderer.cpp
+#include "morf/merge/comparison_session.hpp"
+#include "morf/viewer/mesh_renderer.hpp"
 #include "raymath.h"
 #include "tesselator.h"
 
@@ -41,7 +41,7 @@ namespace Morf {
     }
     )";
 
-    void Renderer::createModels(const Session& session) {
+    void MeshRenderer::createModels(const ComparisonSession& session) {
         if (loaded_) unloadModels();
 
         loaded_ = true;
@@ -63,8 +63,8 @@ namespace Morf {
         }
     }
 
-    ::Model Renderer::buildModel(const std::vector<std::array<float, 3>>& vertices,
-                                 const std::vector<std::vector<std::size_t>>& indices, Color color) {
+    ::Model MeshRenderer::buildModel(const std::vector<std::array<float, 3>>& vertices,
+                                     const std::vector<std::vector<std::size_t>>& indices, Color color) {
         if (indices.empty()) return {0};
         for (const auto& face : indices) {
             if (face.size() < 3 || face.size() > static_cast<std::size_t>(INT_MAX / 3))
@@ -242,7 +242,7 @@ namespace Morf {
         return model;
     }
 
-    void Renderer::drawFullView() {
+    void MeshRenderer::drawFullView() {
         if (!loaded_) return;
 
         DrawModel(baseCommonModel_, {0, 0, 0}, 1.0f, WHITE);
@@ -257,7 +257,7 @@ namespace Morf {
         EndBlendMode();
     }
 
-    void Renderer::drawLeftView() {
+    void MeshRenderer::drawLeftView() {
         if (!loaded_) return;
 
         DrawModel(baseCommonModel_, {0, 0, 0}, 1.0f, WHITE);
@@ -269,7 +269,7 @@ namespace Morf {
         EndBlendMode();
     }
 
-    void Renderer::drawRightView() {
+    void MeshRenderer::drawRightView() {
         if (!loaded_) return;
 
         DrawModel(baseCommonModel_, {0, 0, 0}, 1.0f, WHITE);
@@ -281,7 +281,7 @@ namespace Morf {
         EndBlendMode();
     }
 
-    void Renderer::drawHighlight(const Session& session) {
+    void MeshRenderer::drawHighlight(const ComparisonSession& session) {
         if (!loaded_ || session.getTotalConflicts() == 0) return;
 
         int idx = session.getSelectedIndex();
@@ -323,7 +323,7 @@ namespace Morf {
             DrawLine3D(points[i], points[(i + 1) % points.size()], edgeColor);
     }
 
-    void Renderer::unloadModels() {
+    void MeshRenderer::unloadModels() {
         if (!loaded_) return;
 
         UnloadModel(baseCommonModel_);
@@ -347,7 +347,7 @@ namespace Morf {
         loaded_ = false;
     }
 
-    void Renderer::initLighting() {
+    void MeshRenderer::initLighting() {
         static Shader lightingShader = []() {
             Shader shader = LoadShaderFromMemory(lightingVs, lightingFs);
 

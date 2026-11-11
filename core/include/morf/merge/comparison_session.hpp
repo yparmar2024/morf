@@ -1,4 +1,4 @@
-/* morf - gui/include/application/session.hpp
+/* morf - core/include/morf/merge/comparison_session.hpp
  * Session logic to store current model states
  */
 #pragma once
@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace Morf {
-    class Session {
+    class ComparisonSession {
         private:
             const std::vector<std::array<float, 3>>& baseVertices_;
             const std::vector<std::array<float, 3>>& leftVertices_;
@@ -28,9 +28,11 @@ namespace Morf {
             int selected_ = 0;
 
         public:
-            Session(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
-                    const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
-                    const std::string& mode);
+            // Vertex vectors are borrowed: keep them alive and unchanged for the session's lifetime.
+            // Face vectors are copied during construction.
+            ComparisonSession(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
+                              const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
+                              const std::string& mode);
             void autoMerge();
 
             int getTotalConflicts() const;

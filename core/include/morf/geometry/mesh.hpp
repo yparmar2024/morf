@@ -1,5 +1,5 @@
-/* morf - core/include/formats/model.hpp
- * Generic model to compute delta and render
+/* morf - core/include/morf/geometry/mesh.hpp
+ * Polygon mesh used for comparison and rendering.
  */
 #pragma once
 #include <array>
@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace Morf {
-    class GenericModel {
+    class PolygonMesh {
         private:
             std::vector<std::array<float, 3>> vertices;
             std::vector<std::vector<std::size_t>> faces;

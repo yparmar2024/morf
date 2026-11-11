@@ -1,5 +1,5 @@
-// morf - gui/src/geometry/bounds.cpp
-#include "geometry/bounds.hpp"
+// morf - core/src/geometry/aabb.cpp
+#include "morf/geometry/aabb.hpp"
 
 #include <limits>
 #include <stdexcept>

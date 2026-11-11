@@ -3,8 +3,8 @@
 #include "command/init.hpp"
 #include "command/merge.hpp"
 #include "io/process.hpp"
-#include "io/temporary.hpp"
-#include "performance/timing.hpp"
+#include "morf/io/temporary_file.hpp"
+#include "morf/performance/timing.hpp"
 
 #include <cstdio>
 #include <cstdlib>
