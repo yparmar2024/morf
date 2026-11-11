@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the default before project() initializes the generator's cache entries.
-if(CMAKE_GENERATOR MATCHES "Makefiles|Ninja" AND NOT DEFINED ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Export the compilation database for development tools")
+if(CMAKE_GENERATOR MATCHES "Makefiles|Ninja")
+    if(DEFINED ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
+        set(morf_export_commands_default "$ENV{CMAKE_EXPORT_COMPILE_COMMANDS}")
+    else()
+        set(morf_export_commands_default ON)
+    endif()
+    set(CMAKE_EXPORT_COMPILE_COMMANDS "${morf_export_commands_default}" CACHE BOOL
+        "Export the compilation database for development tools")
 endif()
 
 project(morf VERSION 1.0.0 LANGUAGES C CXX)
