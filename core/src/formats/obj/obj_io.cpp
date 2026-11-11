@@ -1,8 +1,8 @@
-// morf - core/src/formats/obj/handler.cpp
-#include "formats/obj/handler.hpp"
-#include "io/mapped_file.hpp"
-#include "io/temporary.hpp"
-#include "performance/timing.hpp"
+// morf - core/src/formats/obj/obj_io.cpp
+#include "morf/formats/obj/obj_io.hpp"
+#include "morf/io/mapped_file.hpp"
+#include "morf/io/temporary_file.hpp"
+#include "morf/performance/timing.hpp"
 
 #include <charconv>
 #include <cmath>
@@ -57,11 +57,11 @@ namespace Morf {
         }
     } // namespace
 
-    Model Handler::parse(const std::string& filePath) { return parse(filePath, std::cerr); }
+    ObjModel ObjIO::parse(const std::string& filePath) { return parse(filePath, std::cerr); }
 
-    Model Handler::parse(const std::string& filePath, std::ostream& diagnostics) {
+    ObjModel ObjIO::parse(const std::string& filePath, std::ostream& diagnostics) {
         ScopedPhase phase("Parse OBJ (includes mapped reads)");
-        Model model;
+        ObjModel model;
         MappedFile file(filePath);
         std::string_view line;
         std::size_t lineNumber = 0;
@@ -205,9 +205,9 @@ namespace Morf {
         return model;
     }
 
-    GenericModel Handler::convert(const Model& model) {
+    PolygonMesh ObjIO::convert(const ObjModel& model) {
         ScopedPhase phase("Convert to generic model");
-        GenericModel genericModel;
+        PolygonMesh genericModel;
 
         for (const auto& v : model.getVertices()) genericModel.addVertex({v.x, v.y, v.z});
         for (const auto& o : model.getObjects()) {
@@ -222,7 +222,7 @@ namespace Morf {
         return genericModel;
     }
 
-    void Handler::write(const std::string& filePath, const GenericModel& model) {
+    void ObjIO::write(const std::string& filePath, const PolygonMesh& model) {
         const std::filesystem::path destination =
             std::filesystem::weakly_canonical(std::filesystem::absolute(filePath));
         TemporaryFile temporary(destination.parent_path());

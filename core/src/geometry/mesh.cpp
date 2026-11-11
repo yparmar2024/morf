@@ -1,13 +1,13 @@
-// morf - core/src/formats/model.cpp
-#include "formats/model.hpp"
-#include "performance/timing.hpp"
+// morf - core/src/geometry/mesh.cpp
+#include "morf/geometry/mesh.hpp"
+#include "morf/performance/timing.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
 namespace Morf {
-    std::vector<std::vector<std::size_t>> GenericModel::getCanonicalForm() const {
+    std::vector<std::vector<std::size_t>> PolygonMesh::getCanonicalForm() const {
         ScopedPhase phase("Canonicalize model");
         for (const auto& vertex : vertices)
             for (float coordinate : vertex)

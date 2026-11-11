@@ -1,4 +1,4 @@
-/* morf - gui/include/geometry/bounds.hpp
+/* morf - core/include/morf/geometry/aabb.hpp
  * Math logic to see if two boundary boxes collide in 3D space
  */
 #pragma once

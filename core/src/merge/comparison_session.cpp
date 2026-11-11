@@ -1,7 +1,7 @@
-// morf - gui/src/application/application.cpp
-#include "application/session.hpp"
-#include "geometry/bounds.hpp"
-#include "performance/timing.hpp"
+// morf - core/src/merge/comparison_session.cpp
+#include "morf/geometry/aabb.hpp"
+#include "morf/merge/comparison_session.hpp"
+#include "morf/performance/timing.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -16,9 +16,9 @@ namespace Morf {
             return *vertices;
         }
     } // namespace
-    Session::Session(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
-                     const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
-                     const std::string& mode)
+    ComparisonSession::ComparisonSession(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
+                                         const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
+                                         const std::string& mode)
         : baseVertices_(requireVertices(verticePtrs[0])), leftVertices_(requireVertices(verticePtrs[1])),
           rightVertices_(requireVertices(verticePtrs[2])), mode_(mode) {
         ScopedPhase phase("Prepare session");
@@ -69,7 +69,7 @@ namespace Morf {
         }
     }
 
-    void Session::autoMerge() {
+    void ComparisonSession::autoMerge() {
         ScopedPhase phase("Resolve independent edits");
         const auto isLess = [&](const std::vector<std::size_t>& baseFace,
                                 const std::vector<std::array<float, 3>>& baseVertices,
@@ -192,22 +192,22 @@ namespace Morf {
         }
     }
 
-    int Session::getTotalConflicts() const {
+    int ComparisonSession::getTotalConflicts() const {
         return activeLeftAdds_.size() + activeLeftRemoves_.size() + activeRightAdds_.size() +
                activeRightRemoves_.size();
     };
 
-    void Session::nextConflict() {
+    void ComparisonSession::nextConflict() {
         int total = getTotalConflicts();
         if (total > 0) selected_ = (selected_ + 1) % total;
     };
 
-    void Session::prevConflict() {
+    void ComparisonSession::prevConflict() {
         int total = getTotalConflicts();
         if (total > 0) selected_ = (selected_ - 1 + total) % total;
     };
 
-    void Session::acceptOurs() {
+    void ComparisonSession::acceptOurs() {
         if (getTotalConflicts() == 0) return;
         int idx = selected_;
 
@@ -226,7 +226,7 @@ namespace Morf {
         if (getTotalConflicts() > 0 && selected_ >= getTotalConflicts()) selected_ = getTotalConflicts() - 1;
     }
 
-    void Session::acceptTheirs() {
+    void ComparisonSession::acceptTheirs() {
         if (getTotalConflicts() == 0) return;
         int idx = selected_;
 
@@ -246,7 +246,7 @@ namespace Morf {
     }
 
     const std::pair<std::vector<std::array<float, 3>>, std::vector<std::vector<std::size_t>>>
-    Session::getMergedGeometry() const {
+    ComparisonSession::getMergedGeometry() const {
         std::vector<std::array<float, 3>> mergedVertices;
         std::vector<std::vector<std::size_t>> mergedIndices;
         std::map<std::array<float, 3>, std::size_t> vertexMap;

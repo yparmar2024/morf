@@ -1,7 +1,9 @@
 add_library(morfCore STATIC
-    src/compare/engine.cpp
-    src/formats/model.cpp
-    src/formats/obj/handler.cpp
+    src/compare/mesh_diff.cpp
+    src/formats/obj/obj_io.cpp
+    src/geometry/aabb.cpp
+    src/geometry/mesh.cpp
+    src/merge/comparison_session.cpp
 )
 
 target_include_directories(morfCore PUBLIC include)

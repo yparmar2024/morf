@@ -1,8 +1,8 @@
-// morf - gui/src/application/application.cpp
+// morf - gui/src/viewer/viewer.cpp
 #define RAYGUI_IMPLEMENTATION
-#include "application/application.hpp"
-#include "application/session.hpp"
-#include "performance/timing.hpp"
+#include "morf/merge/comparison_session.hpp"
+#include "morf/performance/timing.hpp"
+#include "morf/viewer/viewer.hpp"
 #include "raygui.h"
 #include "raymath.h"
 #include "rcamera.h"
@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 namespace Morf {
-    Application::Application() {
+    Viewer::Viewer() {
         camera_.target = {0.5f, 0.5f, 0.5f};
         camera_.up = {0.0f, 1.0f, 0.0f};
         camera_.fovy = 45.0f;
@@ -25,7 +25,7 @@ namespace Morf {
                             camera_.target.z + dist * cosf(pitch) * sinf(yaw)};
     }
 
-    bool Application::run(Session& session) {
+    bool Viewer::run(ComparisonSession& session) {
         ScopedPhase startup("Viewer startup (window and meshes)");
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(0, 0, "morf - Raylib Viewer");
@@ -34,9 +34,9 @@ namespace Morf {
         rlDisableBackfaceCulling();
         SetTargetFPS(60);
 
-        Renderer renderer;
+        MeshRenderer renderer;
         struct ViewerCleanup {
-                Renderer& renderer;
+                MeshRenderer& renderer;
                 ~ViewerCleanup() {
                     renderer.unloadModels();
                     CloseWindow();
@@ -157,7 +157,7 @@ namespace Morf {
         return saveRequested;
     }
 
-    void Application::updateCamera() {
+    void Viewer::updateCamera() {
         Vector2 delta = GetMouseDelta();
         float wheel = GetMouseWheelMove();
 
@@ -181,7 +181,7 @@ namespace Morf {
         }
     }
 
-    void Application::focusOnFace(const Session& session) {
+    void Viewer::focusOnFace(const ComparisonSession& session) {
         if (session.getTotalConflicts() == 0) return;
 
         int idx = session.getSelectedIndex();
@@ -254,7 +254,7 @@ namespace Morf {
         camera_.target = center;
     }
 
-    void Application::buildMergePanel(Session& session, Renderer& renderer) {
+    void Viewer::buildMergePanel(ComparisonSession& session, MeshRenderer& renderer) {
         const float width = GetScreenWidth();
         const float height = GetScreenHeight();
 

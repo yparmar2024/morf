@@ -1,4 +1,4 @@
-/* morf - core/include/compare/delta.hpp
+/* morf - core/include/morf/compare/delta.hpp
  * Delta object structure for changes
  */
 #pragma once
