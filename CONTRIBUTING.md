@@ -25,7 +25,7 @@ cmake --build build --target format-check
 
 Use the same formatter version as CI, which prints its version in the job log.
 Reconfigure CMake after installing tools so their targets become available.
-Formatting includes only Morf's C++ files in `cli/`, `core/`, and `gui/`.
+Formatting includes Morf's C++ files in `cli/`, `core/`, `gui/`, and `support/`.
 
 ## Static analysis
 
@@ -50,3 +50,10 @@ or opening a graphical viewer. No automated test suite is configured yet.
 
 Performance/style suggestions are deferred; this first pass gates correctness
 and portability without requiring algorithm or optimization changes.
+
+## Phase timing
+
+Use `morf diff --timings <base> <target>` for an interactive startup report or
+`morf diff --benchmark <base> <target>` for processing without a viewer.
+The same flags work with `merge`; benchmark mode never saves merged output.
+Reports are available in Release builds and are disabled by default.

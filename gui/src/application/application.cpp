@@ -2,6 +2,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "application/application.hpp"
 #include "application/session.hpp"
+#include "performance/timing.hpp"
 #include "raygui.h"
 #include "raymath.h"
 #include "rcamera.h"
@@ -25,6 +26,7 @@ namespace Morf {
     }
 
     bool Application::run(Session& session) {
+        ScopedPhase startup("Viewer startup (window and meshes)");
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(0, 0, "morf - Raylib Viewer");
         if (!IsWindowReady()) throw std::runtime_error("Failed to initialize viewer window.");
@@ -43,6 +45,8 @@ namespace Morf {
         renderer.createModels(session);
 
         focusOnFace(session);
+        startup.stop();
+        PhaseTimings::reportStartup();
 
         bool exitRequested = false;
         bool confirmExit = false;

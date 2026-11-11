@@ -1,5 +1,6 @@
 // morf - core/src/formats/model.cpp
 #include "formats/model.hpp"
+#include "performance/timing.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -7,6 +8,7 @@
 
 namespace Morf {
     std::vector<std::vector<std::size_t>> GenericModel::getCanonicalForm() const {
+        ScopedPhase phase("Canonicalize model");
         for (const auto& vertex : vertices)
             for (float coordinate : vertex)
                 if (!std::isfinite(coordinate)) throw std::runtime_error("Non-finite model coordinate.");

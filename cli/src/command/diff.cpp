@@ -20,7 +20,7 @@ namespace Morf {
         return ext;
     }
 
-    int Diff::run(const std::string& baseFilePath, const std::string& targetFilePath) {
+    int Diff::run(const std::string& baseFilePath, const std::string& targetFilePath, bool benchmark) {
         if (!std::filesystem::exists(baseFilePath)) {
             throw std::runtime_error("Base file '" + baseFilePath + "' does not exist.");
         }
@@ -31,7 +31,8 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        const auto [baseModel, targetModel] = loadObjModels(std::array{baseFilePath, targetFilePath});
+        const auto [baseModel, targetModel] =
+            loadObjModels(std::array{baseFilePath, targetFilePath}, {"Base model", "Target model"});
         Delta delta = engine.computeDelta(baseModel, targetModel);
 
         Application app;
@@ -41,6 +42,7 @@ namespace Morf {
             nullptr, nullptr, nullptr, &delta.common, &delta.added, &delta.removed};
 
         Session session(verticePtrs, indicePtrs, "diff");
+        if (benchmark) return 0;
         app.run(session);
 
         return 0;

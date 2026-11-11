@@ -53,6 +53,7 @@ target_include_directories(morfGui
 target_link_libraries(morfGui
     PUBLIC
         raylib
+        morfTiming
     PRIVATE
         libtess2
 )

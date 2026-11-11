@@ -22,7 +22,7 @@ namespace Morf {
     }
 
     int Merge::run(const std::string& baseFilePath, const std::string& ourFilePath, const std::string& theirFilePath,
-                   const std::string& outputFilePath) {
+                   const std::string& outputFilePath, bool benchmark) {
         if (!std::filesystem::exists(baseFilePath)) {
             throw std::runtime_error("Base file '" + baseFilePath + "' does not exist.");
         }
@@ -36,8 +36,8 @@ namespace Morf {
         // TODO: Parse extension and then the compute model based on that, create a Format Factory
         // For now, assume .obj file format
         Engine engine;
-        const auto [baseModel, ourModel, theirModel] =
-            loadObjModels(std::array{baseFilePath, ourFilePath, theirFilePath});
+        const auto [baseModel, ourModel, theirModel] = loadObjModels(
+            std::array{baseFilePath, ourFilePath, theirFilePath}, {"Base model", "Our model", "Their model"});
         Delta ourDelta = engine.computeDelta(baseModel, ourModel);
         Delta theirDelta = engine.computeDelta(baseModel, theirModel);
 
@@ -49,6 +49,7 @@ namespace Morf {
             &theirDelta.common, &theirDelta.added, &theirDelta.removed};
 
         Session session(verticePtrs, indicePtrs, "merge");
+        if (benchmark) return 0;
         if (!app.run(session)) throw std::runtime_error("Merge canceled; no output was saved.");
 
         if (session.isResolved()) {

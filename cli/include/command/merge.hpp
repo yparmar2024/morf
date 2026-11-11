@@ -11,6 +11,7 @@ namespace Morf {
 
         public:
             static int run(const std::string& baseFilePath, const std::string& ourFilePath,
-                           const std::string& theirFilePath, const std::string& outputFilePath = "");
+                           const std::string& theirFilePath, const std::string& outputFilePath = "",
+                           bool benchmark = false);
     };
 } // namespace Morf

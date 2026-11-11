@@ -11,7 +11,7 @@ target_include_directories(morfCore PUBLIC
 )
 
 # Link gui library
-target_link_libraries(morfCore PRIVATE morfGui)
+target_link_libraries(morfCore PUBLIC morfTiming PRIVATE morfGui)
 
 # Require C++17 for compile
 target_compile_features(morfCore PUBLIC cxx_std_17)

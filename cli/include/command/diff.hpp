@@ -10,6 +10,6 @@ namespace Morf {
             static std::string getExtension(const std::string& filePath);
 
         public:
-            static int run(const std::string& baseFilePath, const std::string& targetFilePath);
+            static int run(const std::string& baseFilePath, const std::string& targetFilePath, bool benchmark = false);
     };
 } // namespace Morf

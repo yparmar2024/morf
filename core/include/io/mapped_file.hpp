@@ -1,4 +1,6 @@
 #pragma once
+#include "performance/timing.hpp"
+
 #include <cerrno>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +25,7 @@ namespace Morf {
 
         public:
             explicit MappedFile(const std::string& filePath) {
+                ScopedPhase phase("Map input (setup)");
                 // Nonblocking open prevents unsupported inputs such as FIFOs from hanging.
                 const int descriptor = ::open(filePath.c_str(), O_RDONLY | O_CLOEXEC | O_NONBLOCK);
                 if (descriptor < 0) {

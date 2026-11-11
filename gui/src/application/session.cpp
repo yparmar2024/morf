@@ -1,6 +1,7 @@
 // morf - gui/src/application/application.cpp
 #include "application/session.hpp"
 #include "geometry/bounds.hpp"
+#include "performance/timing.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -20,6 +21,7 @@ namespace Morf {
                      const std::string& mode)
         : baseVertices_(requireVertices(verticePtrs[0])), leftVertices_(requireVertices(verticePtrs[1])),
           rightVertices_(requireVertices(verticePtrs[2])), mode_(mode) {
+        ScopedPhase phase("Prepare session");
         if (mode_ != "diff" && mode_ != "merge") throw std::invalid_argument("Invalid session mode.");
         // Common and removed faces use base indices; additions use their own side.
         const std::array<const std::vector<std::array<float, 3>>*, 6> faceVertices = {
@@ -68,6 +70,7 @@ namespace Morf {
     }
 
     void Session::autoMerge() {
+        ScopedPhase phase("Resolve independent edits");
         const auto isLess = [&](const std::vector<std::size_t>& baseFace,
                                 const std::vector<std::array<float, 3>>& baseVertices,
                                 const std::vector<std::size_t>& targetFace,
