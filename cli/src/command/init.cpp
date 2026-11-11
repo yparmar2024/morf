@@ -1,6 +1,7 @@
 // morf - cli/src/command/diff.cpp
 #include "command/init.hpp"
 #include "io/process.hpp"
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -39,5 +40,5 @@ namespace Morf {
         }
         std::cout << "Initialized morf to work in current repository.\n";
         return 0;
-    }    
+    }
 } // namespace Morf

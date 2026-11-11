@@ -7,6 +7,7 @@ project(morf VERSION 1.0.0 LANGUAGES C CXX)
 # Set global project standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -15,3 +16,5 @@ endif()
 add_subdirectory(gui)
 add_subdirectory(core)
 add_subdirectory(cli)
+
+include(cmake/DeveloperTools.cmake)
