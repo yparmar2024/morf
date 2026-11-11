@@ -28,6 +28,8 @@ namespace Morf {
             int selected_ = 0;
 
         public:
+            // Vertex vectors are borrowed: keep them alive and unchanged for the session's lifetime.
+            // Face vectors are copied during construction.
             ComparisonSession(const std::array<const std::vector<std::array<float, 3>>*, 3>& verticePtrs,
                               const std::array<const std::vector<std::vector<std::size_t>>*, 6>& indicePtrs,
                               const std::string& mode);

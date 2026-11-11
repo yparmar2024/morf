@@ -190,6 +190,9 @@ namespace Morf {
         for (std::size_t i = 0; i < remainingRightRemoves.size(); ++i) {
             if (rightRemoveCollides[i]) activeRightRemoves_.push_back(remainingRightRemoves[i]);
         }
+
+        const int total = getTotalConflicts();
+        selected_ = total > 0 ? std::min(selected_, total - 1) : 0;
     }
 
     int ComparisonSession::getTotalConflicts() const {
