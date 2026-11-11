@@ -27,18 +27,37 @@ if(MORF_CLANG_FORMAT)
 endif()
 
 find_program(MORF_CPPCHECK NAMES cppcheck)
-if(MORF_CPPCHECK)
-    add_custom_target(cppcheck
-        COMMAND "${MORF_CPPCHECK}"
-            "--project=${PROJECT_BINARY_DIR}/compile_commands.json"
-            "-i${PROJECT_BINARY_DIR}"
-            --enable=warning,portability
-            --error-exitcode=1
-            --inline-suppr
-            --std=c++17
-            "--suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck-suppressions"
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        COMMENT "Checking Morf C++ for defects"
-        VERBATIM
+if(MORF_CPPCHECK AND CMAKE_EXPORT_COMPILE_COMMANDS AND CMAKE_GENERATOR MATCHES "Makefiles|Ninja")
+    execute_process(
+        COMMAND "${MORF_CPPCHECK}" --version
+        OUTPUT_VARIABLE morf_cppcheck_version_output
+        RESULT_VARIABLE morf_cppcheck_version_result
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    if(morf_cppcheck_version_result EQUAL 0 AND morf_cppcheck_version_output MATCHES "Cppcheck ([0-9]+\\.[0-9]+(\\.[0-9]+)?)")
+        set(morf_cppcheck_version "${CMAKE_MATCH_1}")
+    endif()
+
+    if(NOT morf_cppcheck_version OR morf_cppcheck_version VERSION_LESS 2.7)
+        message(WARNING "Cppcheck 2.7 or newer is required for multiple file filters; the cppcheck target is disabled.")
+    else()
+        # Exact source paths avoid wildcard differences between Cppcheck versions.
+        set(morf_cppcheck_filters)
+        foreach(source IN LISTS MORF_CXX_FILES)
+            list(APPEND morf_cppcheck_filters "--file-filter=${source}")
+        endforeach()
+        add_custom_target(cppcheck
+            COMMAND "${MORF_CPPCHECK}"
+                "--project=${PROJECT_BINARY_DIR}/compile_commands.json"
+                ${morf_cppcheck_filters}
+                --enable=warning,portability
+                --error-exitcode=1
+                --inline-suppr
+                --std=c++17
+                "--suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck-suppressions"
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            COMMENT "Checking Morf C++ for defects"
+            VERBATIM
+        )
+    endif()
 endif()
