@@ -14,6 +14,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 class ResolvedInputs {
@@ -83,6 +84,10 @@ std::vector<std::string> ResolvedInputs::resolve(const std::vector<std::string>&
     std::vector<std::string> resolvedPaths;
     resolvedPaths.reserve(paths.size());
     for (const auto& path : paths) {
+        std::error_code statusError;
+        const auto status = std::filesystem::status(path, statusError);
+        if (!statusError && !std::filesystem::is_regular_file(status))
+            throw std::runtime_error("Input must be a regular file: '" + path + "'.");
         std::ifstream file(path);
         if (!file.is_open()) throw std::runtime_error("Failed to open '" + path + "' for reading.");
         std::string firstLine;
