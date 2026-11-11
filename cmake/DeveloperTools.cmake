@@ -27,11 +27,14 @@ if(MORF_CLANG_FORMAT)
 endif()
 
 find_program(MORF_CPPCHECK NAMES cppcheck)
-if(MORF_CPPCHECK)
+if(MORF_CPPCHECK AND CMAKE_EXPORT_COMPILE_COMMANDS AND CMAKE_GENERATOR MATCHES "Makefiles|Ninja")
     add_custom_target(cppcheck
         COMMAND "${MORF_CPPCHECK}"
             "--project=${PROJECT_BINARY_DIR}/compile_commands.json"
-            "-i${PROJECT_BINARY_DIR}"
+            "--file-filter=${PROJECT_SOURCE_DIR}/cli/*"
+            "--file-filter=${PROJECT_SOURCE_DIR}/core/*"
+            "--file-filter=${PROJECT_SOURCE_DIR}/gui/*"
+            "--file-filter=${PROJECT_SOURCE_DIR}/support/*"
             --enable=warning,portability
             --error-exitcode=1
             --inline-suppr
